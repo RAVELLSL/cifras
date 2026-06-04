@@ -1373,6 +1373,46 @@
     }
 
 
+    .artist-grid.list-view {
+      grid-template-columns: 1fr;
+      gap: 9px;
+    }
+
+    .artist-grid.list-view .style-card {
+      min-height: 0;
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      align-items: center;
+      gap: 12px;
+      padding: 12px 14px;
+      border-radius: 18px;
+    }
+
+    .artist-grid.list-view .style-card strong,
+    .artist-grid.list-view .style-card span {
+      min-width: 0;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .artist-grid.list-view .style-card span {
+      margin-top: 0;
+      text-align: right;
+    }
+
+    @media (max-width: 640px) {
+      .artist-grid.list-view .style-card {
+        grid-template-columns: 1fr;
+        align-items: start;
+      }
+
+      .artist-grid.list-view .style-card span {
+        text-align: left;
+      }
+    }
+
+
     /* Biblioteca reorganizada: controles agrupados por função para reduzir confusão visual. */
     #resultsView .section-head {
       align-items: flex-start;
@@ -1620,6 +1660,7 @@
         <nav class="nav" aria-label="Menu principal">
           <button type="button" class="active" data-nav="home">Início</button>
           <button type="button" data-nav="library">Biblioteca</button>
+          <button type="button" data-nav="artists">Artistas</button>
           <button type="button" data-nav="playlists">Playlists</button>
           <button type="button" data-nav="styles">Estilos</button>
           <button type="button" data-open-external-dictionary>Dicionário de acordes</button>
@@ -1734,6 +1775,23 @@
         </div>
       </div>
       <div class="playlist-grid" id="playlistsGrid"></div>
+    </section>
+
+    <section class="view" id="artistsView">
+      <div class="section-head">
+        <div>
+          <h2>Artistas cadastrados</h2>
+          <p>Clique em um artista para abrir a lista com todas as músicas dele.</p>
+        </div>
+        <div class="section-tools">
+          <span class="counter" id="artistCounter">0 artista(s)</span>
+          <div class="layout-toggle" id="artistLayoutToggle" aria-label="Modo de exibição dos artistas">
+            <button type="button" class="active" data-artist-layout="cards">Cards</button>
+            <button type="button" data-artist-layout="list">Lista</button>
+          </div>
+        </div>
+      </div>
+      <div class="style-grid artist-grid" id="artistsGrid"></div>
     </section>
 
     <section class="view" id="stylesView">
@@ -2249,6 +2307,7 @@
     const THEME_KEY = "banco-cifras-theme";
     const LAYOUT_KEY = "banco-cifras-library-layout";
     const COLUMNS_KEY = "banco-cifras-library-columns";
+    const ARTIST_LAYOUT_KEY = "banco-cifras-artist-layout";
     const PLAYLISTS_KEY = "banco-cifras-playlists";
     const PLAYLIST_SORT_KEY = "banco-cifras-playlist-sort";
     const CHORD_OVERRIDES_KEY = "banco-cifras-chord-overrides";
@@ -2377,6 +2436,7 @@
         renderResults(state.lastResults, resultsTitle.textContent || "Resultados", resultsDescription.textContent || "Selecione uma música para abrir a cifra completa em uma nova aba.");
       }
 
+      if (state.currentView === "artists") renderArtists();
       if (state.currentView === "styles") renderStyles();
       if (state.currentView === "playlists") renderPlaylists();
 
@@ -2491,6 +2551,7 @@
       lastResults: [],
       resultLayout: "list",
       resultColumns: 1,
+      artistLayout: localStorage.getItem(ARTIST_LAYOUT_KEY) === "list" ? "list" : "cards",
       selectedSongs: new Set(),
       playlistSort: localStorage.getItem(PLAYLIST_SORT_KEY) || "alpha"
     };
@@ -2498,6 +2559,7 @@
     const homeView = document.getElementById("homeView");
     const resultsView = document.getElementById("resultsView");
     const playlistsView = document.getElementById("playlistsView");
+    const artistsView = document.getElementById("artistsView");
     const stylesView = document.getElementById("stylesView");
     const manualView = document.getElementById("manualView");
     const backupView = document.getElementById("backupView");
@@ -2505,6 +2567,7 @@
     const resultsGrid = document.getElementById("resultsGrid");
     const playlistsGrid = document.getElementById("playlistsGrid");
     const savedCombinationsGrid = document.getElementById("savedCombinationsGrid");
+    const artistsGrid = document.getElementById("artistsGrid");
     const stylesGrid = document.getElementById("stylesGrid");
     const searchInput = document.getElementById("searchInput");
     const searchForm = document.getElementById("searchForm");
@@ -2522,6 +2585,8 @@
     const playlistCounter = document.getElementById("playlistCounter");
     const combinationCounter = document.getElementById("combinationCounter");
     const playlistSortSelect = document.getElementById("playlistSortSelect");
+    const artistCounter = document.getElementById("artistCounter");
+    const artistLayoutToggle = document.getElementById("artistLayoutToggle");
     const styleCounter = document.getElementById("styleCounter");
     const resultsTitle = document.getElementById("resultsTitle");
     const resultsDescription = document.getElementById("resultsDescription");
@@ -2655,6 +2720,15 @@
       return [...map.entries()].sort((a, b) => a[0].localeCompare(b[0], "pt-BR"));
     }
 
+    function uniqueArtists() {
+      const map = new Map();
+      SONGS.forEach(song => {
+        const artist = song.artist || "Artista não informado";
+        map.set(artist, (map.get(artist) || 0) + 1);
+      });
+      return [...map.entries()].sort((a, b) => a[0].localeCompare(b[0], "pt-BR"));
+    }
+
 
 
     function chordDictionaryTypes() {
@@ -2695,7 +2769,7 @@
       }).join("");
 
       if (chordDictionaryCounter) {
-        chordDictionaryCounter.textContent = `${CHORD_DICTIONARY.length} acorde(s) · ${CHORD_DICTIONARY.length * 4} posição(ões) e inversões`;
+        chordDictionaryCounter.textContent = "Consulta externa no Cifra Club";
       }
     }
 
@@ -3155,6 +3229,7 @@
       homeView.classList.toggle("compact", viewName !== "home");
       resultsView.classList.remove("active");
       playlistsView.classList.remove("active");
+      artistsView.classList.remove("active");
       stylesView.classList.remove("active");
       manualView.classList.remove("active");
       backupView.classList.remove("active");
@@ -3179,6 +3254,11 @@
       if (viewName === "playlists") {
         renderPlaylists();
         playlistsView.classList.add("active");
+      }
+
+      if (viewName === "artists") {
+        renderArtists();
+        artistsView.classList.add("active");
       }
 
       if (viewName === "styles") {
@@ -3258,6 +3338,7 @@
 
       updateDatabaseHint();
       if (state.currentView === "library") renderResults(SONGS, "Biblioteca", "Todas as músicas previamente cadastradas na base interna.");
+      if (state.currentView === "artists") renderArtists();
       if (state.currentView === "styles") renderStyles();
 
       manualStatus.textContent = `Música salva com id: ${songId}`;
@@ -3466,6 +3547,18 @@
       });
     }
 
+    function applyArtistLayout(layout) {
+      state.artistLayout = layout === "list" ? "list" : "cards";
+      localStorage.setItem(ARTIST_LAYOUT_KEY, state.artistLayout);
+      artistsGrid.classList.toggle("list-view", state.artistLayout === "list");
+
+      if (artistLayoutToggle) {
+        artistLayoutToggle.querySelectorAll("button[data-artist-layout]").forEach(button => {
+          button.classList.toggle("active", button.dataset.artistLayout === state.artistLayout);
+        });
+      }
+    }
+
     function renderResults(items, title = "Resultados", description = "Selecione uma música para abrir a cifra completa em uma nova aba.") {
       const sorted = [...items].sort((a, b) => a.title.localeCompare(b.title, "pt-BR"));
       state.lastResults = sorted;
@@ -3532,6 +3625,31 @@
       updateSelectionUI();
     }
 
+    function renderArtists() {
+      const artists = uniqueArtists();
+      artistCounter.textContent = `${artists.length} artista(s)`;
+      artistsGrid.innerHTML = "";
+      applyArtistLayout(state.artistLayout);
+
+      if (!artists.length) {
+        artistsGrid.innerHTML = `<div class="empty">Nenhum artista cadastrado.</div>`;
+        return;
+      }
+
+      artists.forEach(([artist, count]) => {
+        const button = document.createElement("button");
+        button.type = "button";
+        button.className = "style-card";
+        button.innerHTML = `<strong>${escapeHTML(artist)}</strong><span>${count} música(s) cadastrada(s)</span>`;
+        button.addEventListener("click", () => {
+          const filtered = SONGS.filter(song => normalize(song.artist || "Artista não informado") === normalize(artist));
+          showView("library");
+          renderResults(filtered, artist, `Músicas cadastradas de ${artist}.`);
+        });
+        artistsGrid.appendChild(button);
+      });
+    }
+
     function renderStyles() {
       const styles = uniqueStyles();
       styleCounter.textContent = `${styles.length} estilo(s)`;
@@ -3558,7 +3676,7 @@
 
     function searchSongs(query) {
       const q = normalize(query);
-      if (!q) return [];
+      if (!q) return [...SONGS];
       return SONGS.filter(song => getSearchText(song).includes(q));
     }
 
@@ -3964,11 +4082,16 @@
       const trimmed = String(line || "").trim();
       if (!trimmed) return false;
       if (/^\[[^\]]+\]\s*([A-G](?:#|b)?)/.test(trimmed)) return true;
-      const withoutSections = trimmed.replace(/\[[^\]]+\]/g, " ").trim();
+      const withoutSections = trimmed
+        .replace(/\[[^\]]+\]/g, " ")
+        .replace(/\b(?:tom|intro|introd\.?|introducao|introdução|refr(?:ao|ão)|verso|ponte|solo|final|coda)\b[.:-]?/gi, " ")
+        .replace(/\b(?:\d+x|x\d+)\b/gi, " ")
+        .trim();
       if (!withoutSections) return false;
       const tokens = withoutSections.split(/\s+/).filter(Boolean);
       const chordCount = tokens.filter(simpleChordToken).length;
-      return chordCount > 0 && (chordCount / tokens.length >= 0.55 || (tokens.length <= 4 && chordCount >= 2));
+      const ratio = chordCount / tokens.length;
+      return chordCount > 0 && (ratio >= 0.55 || chordCount >= 3 || (tokens.length <= 4 && chordCount >= 2));
     }
 
     function renderChordTokenButton(label, className = "") {
@@ -4225,7 +4348,7 @@
       if (/^\[[^\]]+\]\s*([A-G](?:#|b)?)/.test(trimmed)) return true;
       const withoutSections = trimmed
         .replace(/\[[^\]]+\]/g, ' ')
-        .replace(/\b(?:intro|introd\.?|introducao|introdução|refr(?:ao|ão)|verso|ponte|solo|final|coda)\b[.:-]?/gi, ' ')
+        .replace(/\b(?:tom|intro|introd\.?|introducao|introdução|refr(?:ao|ão)|verso|ponte|solo|final|coda)\b[.:-]?/gi, ' ')
         .replace(/\b(?:\d+x|x\d+)\b/gi, ' ')
         .trim();
       if (!withoutSections) return false;
@@ -4547,14 +4670,18 @@
       };
 
       const safeSong = JSON.stringify(song)
-        .replace(/</g, "\u003c")
-        .replace(/>/g, "\u003e")
-        .replace(/&/g, "\u0026");
+        .replace(/</g, "\\u003c")
+        .replace(/>/g, "\\u003e")
+        .replace(/&/g, "\\u0026")
+        .replace(/\u2028/g, "\\u2028")
+        .replace(/\u2029/g, "\\u2029");
 
       const safeOriginalMetadata = JSON.stringify(originalMetadata)
-        .replace(/</g, "\u003c")
-        .replace(/>/g, "\u003e")
-        .replace(/&/g, "\u0026");
+        .replace(/</g, "\\u003c")
+        .replace(/>/g, "\\u003e")
+        .replace(/&/g, "\\u0026")
+        .replace(/\u2028/g, "\\u2028")
+        .replace(/\u2029/g, "\\u2029");
 
       let safePlaylistSnapshot = "[]";
       try {
@@ -5738,7 +5865,7 @@
 
       const withoutSections = trimmed
         .replace(/\[[^\]]+\]/g, " ")
-        .replace(/\b(?:intro|introd\.?|introducao|introdução|refr(?:ao|ão)|verso|ponte|solo|final|coda)\b[.:-]?/gi, " ")
+        .replace(/\b(?:tom|intro|introd\.?|introducao|introdução|refr(?:ao|ão)|verso|ponte|solo|final|coda)\b[.:-]?/gi, " ")
         .replace(/\b(?:\d+x|x\d+)\b/gi, " ")
         .trim();
       if (!withoutSections) return false;
@@ -5770,13 +5897,13 @@
         .join("\n");
     }
 
-    function createChordTokenButton(label, className = "") {
+    function createChordTokenButton(label, className = "", displayText = label) {
       const chordLabel = String(label || "").trim();
       const button = document.createElement("button");
       button.type = "button";
       button.className = ("chord-token " + className).trim();
       button.dataset.chordLabel = chordLabel;
-      button.textContent = chordLabel;
+      button.textContent = String(displayText || chordLabel);
       return button;
     }
 
@@ -5835,7 +5962,7 @@
 
           const token = cleanChordToken(part);
           if (isChordToken(token)) {
-            lineElement.append(createChordTokenButton(token, "sheet-chord"));
+            lineElement.append(createChordTokenButton(token, "sheet-chord", part));
             return;
           }
 
@@ -6628,6 +6755,14 @@
       applyResultsColumns(button.dataset.columns);
     });
 
+    if (artistLayoutToggle) {
+      artistLayoutToggle.addEventListener("click", event => {
+        const button = event.target.closest("button[data-artist-layout]");
+        if (!button) return;
+        applyArtistLayout(button.dataset.artistLayout);
+      });
+    }
+
     createPlaylistButton.addEventListener("click", createPlaylistFromSelected);
     addToPlaylistButton.addEventListener("click", addSelectedToExistingPlaylist);
     combineSongsButton.addEventListener("click", combineSelectedSongsInNewTab);
@@ -6750,6 +6885,7 @@
     document.body.dataset.view = state.currentView;
     applyResultsColumns(state.resultColumns, false);
     applyResultsLayout(state.resultLayout);
+    applyArtistLayout(state.artistLayout);
     renderPlaylistOptions();
     playlistSortSelect.value = state.playlistSort;
     applyTheme(getPreferredTheme());
