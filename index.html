@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Banco de Cifras | Consulta</title>
+  <title>Banco de Cifras</title>
   <style>
     :root {
       --bg: #f7f5f1;
@@ -4460,7 +4460,7 @@
     .chord-modal-card p { margin:6px 0 0; color:var(--muted); }
     .chord-modal-card img { width:auto; max-width:min(260px,100%); max-height:min(58vh,420px); height:auto; display:block; margin:12px auto 0; object-fit:contain; border-radius:12px; background:#fff; }
     .chord-modal-card button { min-height:34px; padding:0 12px; border-radius:999px; background:var(--surface-soft); color:var(--text); border:1px solid var(--line); }
-    @media (max-width:700px) { .top { flex-direction:column; } .close { width:100%; } .tool { grid-template-columns:1fr; } .actions button, .transpose-actions button { flex:1; } .song-head { padding:13px; } .transpose-row { align-items:stretch; } .transpose-actions { width:100%; } }
+    @media (max-width:700px) { .top { flex-direction:column; } .close { width:100%; } .tool { grid-template-columns:1fr; } .tool.scroll-tool { width:calc(100% - 22px); bottom:8px; } .actions button, .transpose-actions button { flex:1; } .song-head { padding:13px; } .transpose-row { align-items:stretch; } .transpose-actions { width:100%; } }
   </style>
 </head>
 <body>
@@ -4472,7 +4472,7 @@
       </div>
       <button class="close" type="button" onclick="window.close()">Fechar aba</button>
     </header>
-    <section class="tool" aria-label="Rolagem automática da playlist">
+    <section class="tool scroll-tool" aria-label="Rolagem automática da playlist">
       <strong id="status">parada · espaço inicia</strong>
       <div class="speed"><input type="range" id="speed" min="1" max="28" step="0.5" value="8"><span id="speedLabel">8 px/s</span></div>
       <div class="actions"><button type="button" id="start">Iniciar</button><button type="button" id="pause">Pausar</button><button type="button" id="saveCombinationState">Salvar combinação</button><button type="button" id="fontDown">A−</button><button type="button" id="fontUp">A+</button><button type="button" id="topBtn">Topo</button></div>
@@ -4984,7 +4984,7 @@
       min-height: 100vh;
       min-height: 100dvh;
       margin: 0 auto;
-      padding: 16px 0 38px;
+      padding: 16px 0 132px;
       display: flex;
       flex-direction: column;
       overflow: visible;
@@ -5052,22 +5052,25 @@
     .toolbox-toggle-row {
       grid-column: 1 / -1;
       display: flex;
-      justify-content: flex-end;
+      justify-content: space-between;
       align-items: center;
       gap: 8px;
+      flex-wrap: wrap;
     }
 
     .tools-collapse-toggle {
-      min-height: 32px;
-      padding: 0 12px;
+      min-height: 36px;
+      padding: 0 14px;
       border-radius: 999px;
       border: 1px solid var(--line);
       background: var(--surface-soft);
       color: var(--text);
       white-space: nowrap;
+      flex: 1 1 210px;
     }
 
-    .tools-collapse-toggle:hover {
+    .tools-collapse-toggle:hover,
+    .tools-collapse-toggle[aria-expanded="true"] {
       background: var(--text);
       color: var(--surface);
     }
@@ -5099,11 +5102,17 @@
     }
 
     .tool.scroll-tool {
-      grid-column: 1 / -1;
+      position: fixed;
+      left: 50%;
+      bottom: 12px;
+      transform: translateX(-50%);
+      z-index: 80;
+      width: min(var(--max), calc(100% - 28px));
       display: grid;
       grid-template-columns: auto minmax(180px, 1fr) auto;
       align-items: center;
       min-height: 52px;
+      backdrop-filter: blur(14px);
     }
 
     .tool.playlist-tool {
@@ -5445,6 +5454,75 @@
       border: 1px solid var(--line);
     }
 
+    @media (min-width: 600px) and (max-width: 920px) and (orientation: portrait) {
+      .page {
+        width: min(100% - 22px, var(--max));
+        padding-bottom: 126px;
+      }
+
+      .toolbox {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 8px;
+      }
+
+      .toolbox-toggle-row {
+        gap: 8px;
+      }
+
+      .tools-collapse-toggle {
+        min-height: 38px;
+        flex: 1 1 calc(50% - 8px);
+      }
+
+      .song-adjustments-panel:not(.is-collapsed) {
+        display: contents;
+      }
+
+      .song-adjustments-panel .tool {
+        min-height: 96px;
+        align-content: space-between;
+        align-items: flex-start;
+        justify-content: flex-start;
+      }
+
+      .song-adjustments-panel .tool > div:first-child {
+        width: 100%;
+      }
+
+      .song-adjustments-panel .actions {
+        width: 100%;
+        gap: 5px;
+      }
+
+      .song-adjustments-panel .actions button {
+        flex: 1 1 auto;
+        min-height: 34px;
+        padding: 0 7px;
+        font-size: 0.78rem;
+      }
+
+      .tool.playlist-tool {
+        grid-column: 1 / -1;
+        grid-template-columns: 0.8fr 1fr 1fr auto;
+      }
+
+      .tool.edit-tool {
+        grid-column: 1 / -1;
+      }
+
+      .tool.scroll-tool {
+        width: min(100% - 22px, var(--max));
+        bottom: 10px;
+        grid-template-columns: auto minmax(220px, 1fr) auto;
+      }
+
+      .chord-sheet.columns-2,
+      .chord-sheet.columns-3 {
+        columns: 1;
+        overflow-x: hidden;
+      }
+    }
+
     @media (max-width: 1120px) {
       .page {
         width: min(var(--max), calc(100% - 24px));
@@ -5529,6 +5607,18 @@
         min-width: 100%;
       }
 
+      .tool.scroll-tool {
+        width: min(100% - 22px, var(--max));
+        bottom: 8px;
+        grid-template-columns: 1fr;
+        gap: 7px;
+        padding: 9px;
+      }
+
+      .tool.scroll-tool .actions button {
+        flex: 1;
+      }
+
       .chord-sheet {
         max-height: none;
         min-height: 0;
@@ -5542,6 +5632,72 @@
 
       .editor-meta-grid {
         grid-template-columns: 1fr;
+      }
+    }
+
+
+    @media (max-width: 1120px) {
+      .page {
+        padding-bottom: 132px;
+      }
+    }
+
+    @media (min-width: 600px) and (max-width: 920px) and (orientation: portrait) {
+      .page {
+        width: min(100% - 22px, var(--max));
+        padding-bottom: 126px;
+      }
+
+      .toolbox {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+      }
+
+      .tools-collapse-toggle {
+        flex: 1 1 calc(50% - 8px);
+      }
+
+      .song-adjustments-panel:not(.is-collapsed) {
+        display: contents;
+      }
+
+      .song-adjustments-panel .tool {
+        min-height: 96px;
+        align-content: space-between;
+        align-items: flex-start;
+        justify-content: flex-start;
+      }
+
+      .song-adjustments-panel .tool > div:first-child {
+        width: 100%;
+      }
+
+      .song-adjustments-panel .actions {
+        width: 100%;
+        gap: 5px;
+      }
+
+      .song-adjustments-panel .actions button {
+        flex: 1 1 auto;
+        min-height: 34px;
+        padding: 0 7px;
+        font-size: 0.78rem;
+      }
+
+      .tool.playlist-tool {
+        grid-column: 1 / -1;
+        grid-template-columns: 0.8fr 1fr 1fr auto;
+      }
+
+      .tool.scroll-tool {
+        width: min(100% - 22px, var(--max));
+        bottom: 10px;
+        grid-template-columns: auto minmax(220px, 1fr) auto;
+      }
+    }
+
+    @media (max-width: 640px) {
+      .page {
+        padding-bottom: 168px;
       }
     }
   </style>
@@ -5559,13 +5715,14 @@
       <button class="close" type="button" onclick="window.close()">Fechar aba</button>
     </header>
 
-    <section class="toolbox">
+    <section class="toolbox" aria-label="Ferramentas da cifra">
       <div class="toolbox-toggle-row">
-        <button type="button" class="tools-collapse-toggle" id="toolsCollapseToggle" aria-expanded="true" aria-controls="collapsibleTools">Recolher ferramentas</button>
+        <button type="button" class="tools-collapse-toggle" id="songAdjustmentsToggle" aria-expanded="false" aria-controls="songAdjustmentsPanel">Mostrar ajustes da cifra</button>
+        <button type="button" class="tools-collapse-toggle" id="songPlaylistEditToggle" aria-expanded="false" aria-controls="songPlaylistEditPanel">Mostrar playlist e edição</button>
       </div>
 
-      <div class="collapsible-tools" id="collapsibleTools">
-        <div class="tool" aria-label="Controles de transposição">
+      <div class="collapsible-tools song-adjustments-panel is-collapsed" id="songAdjustmentsPanel">
+        <div class="tool transpose-tool" aria-label="Controles de transposição">
           <div>
             <span>Transposição tonal</span>
             <strong id="transposeInfo">Tom original</strong>
@@ -5578,7 +5735,7 @@
           </div>
         </div>
 
-        <div class="tool" aria-label="Controles de colunas">
+        <div class="tool view-tool" aria-label="Controles de colunas">
           <div>
             <span>Visualização</span>
             <strong id="columnInfo">1 coluna</strong>
@@ -5601,7 +5758,9 @@
             <button type="button" id="fontIncrease" aria-label="Aumentar tamanho da letra">A+</button>
           </div>
         </div>
+      </div>
 
+      <div class="collapsible-tools song-playlist-edit-panel is-collapsed" id="songPlaylistEditPanel">
         <div class="tool playlist-tool" aria-label="Adicionar música à playlist">
           <div>
             <span>Playlist</span>
@@ -5997,8 +6156,10 @@
     const editSave = document.getElementById("editSave");
     const editCancel = document.getElementById("editCancel");
     const editReset = document.getElementById("editReset");
-    const toolsCollapseToggle = document.getElementById("toolsCollapseToggle");
-    const collapsibleTools = document.getElementById("collapsibleTools");
+    const songAdjustmentsToggle = document.getElementById("songAdjustmentsToggle");
+    const songAdjustmentsPanel = document.getElementById("songAdjustmentsPanel");
+    const songPlaylistEditToggle = document.getElementById("songPlaylistEditToggle");
+    const songPlaylistEditPanel = document.getElementById("songPlaylistEditPanel");
 
     document.documentElement.dataset.theme = initialTheme === "dark" ? "dark" : "light";
 
@@ -6655,14 +6816,33 @@
       return getDocumentScroller();
     }
 
-    function setToolsCollapsed(collapsed) {
-      if (!collapsibleTools || !toolsCollapseToggle) return;
-      collapsibleTools.classList.toggle("is-collapsed", collapsed);
-      toolsCollapseToggle.textContent = collapsed ? "Mostrar ferramentas" : "Recolher ferramentas";
-      toolsCollapseToggle.setAttribute("aria-expanded", collapsed ? "false" : "true");
-      localStorage.setItem(SONG_TOOLS_COLLAPSED_KEY, collapsed ? "1" : "0");
+    function setCollapsiblePanelCollapsed(panel, toggle, collapsed, openLabel, closeLabel) {
+      if (!panel || !toggle) return;
+      panel.classList.toggle("is-collapsed", collapsed);
+      toggle.textContent = collapsed ? openLabel : closeLabel;
+      toggle.setAttribute("aria-expanded", collapsed ? "false" : "true");
       resetScrollTiming();
       updateScrollLabels();
+    }
+
+    function setSongAdjustmentsCollapsed(collapsed) {
+      setCollapsiblePanelCollapsed(
+        songAdjustmentsPanel,
+        songAdjustmentsToggle,
+        collapsed,
+        "Mostrar ajustes da cifra",
+        "Recolher ajustes da cifra"
+      );
+    }
+
+    function setSongPlaylistEditCollapsed(collapsed) {
+      setCollapsiblePanelCollapsed(
+        songPlaylistEditPanel,
+        songPlaylistEditToggle,
+        collapsed,
+        "Mostrar playlist e edição",
+        "Recolher playlist e edição"
+      );
     }
 
     function resetScrollTiming() {
@@ -6850,8 +7030,11 @@
     fontReset.addEventListener("click", () => applyFontSize(DEFAULT_CHORD_FONT_SIZE));
     fontIncrease.addEventListener("click", () => adjustFontSize(FONT_SIZE_STEP));
     addSongToPlaylist.addEventListener("click", addCurrentSongToPlaylist);
-    if (toolsCollapseToggle && collapsibleTools) {
-      toolsCollapseToggle.addEventListener("click", () => setToolsCollapsed(!collapsibleTools.classList.contains("is-collapsed")));
+    if (songAdjustmentsToggle && songAdjustmentsPanel) {
+      songAdjustmentsToggle.addEventListener("click", () => setSongAdjustmentsCollapsed(!songAdjustmentsPanel.classList.contains("is-collapsed")));
+    }
+    if (songPlaylistEditToggle && songPlaylistEditPanel) {
+      songPlaylistEditToggle.addEventListener("click", () => setSongPlaylistEditCollapsed(!songPlaylistEditPanel.classList.contains("is-collapsed")));
     }
     editToggle.addEventListener("click", enterChordEditMode);
     editSave.addEventListener("click", saveChordEditMode);
@@ -6893,7 +7076,8 @@
     updateView();
     applyColumns(1);
     restoreSavedFontSize();
-    setToolsCollapsed(localStorage.getItem(SONG_TOOLS_COLLAPSED_KEY) === "1");
+    setSongAdjustmentsCollapsed(true);
+    setSongPlaylistEditCollapsed(true);
     populateChordPlaylistSelect();
     updateEditUI();
     updateScrollLabels();
