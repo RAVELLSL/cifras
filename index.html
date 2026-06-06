@@ -1643,6 +1643,213 @@
         flex: 1 1 100%;
       }
     }
+
+
+    /* Painéis recolhíveis da Biblioteca: iniciam fechados e abrem ao toque/clique. */
+    .library-collapsible {
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: color-mix(in srgb, var(--surface) 92%, transparent);
+      box-shadow: 0 10px 26px rgba(31, 31, 31, 0.04);
+      overflow: hidden;
+    }
+
+    html[data-theme="dark"] .library-collapsible {
+      box-shadow: 0 10px 26px rgba(0, 0, 0, 0.18);
+    }
+
+    .library-collapsible-summary {
+      min-height: 58px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 14px;
+      padding: 14px 16px;
+      list-style: none;
+      cursor: pointer;
+      user-select: none;
+      touch-action: manipulation;
+    }
+
+    .library-collapsible-summary::-webkit-details-marker {
+      display: none;
+    }
+
+    .library-collapsible-title {
+      min-width: 0;
+      display: grid;
+      gap: 2px;
+    }
+
+    .library-collapsible-title strong {
+      font-size: 1rem;
+      letter-spacing: -0.03em;
+    }
+
+    .library-collapsible-title span {
+      color: var(--muted);
+      font-size: 0.84rem;
+    }
+
+    .library-collapsible-summary::after {
+      content: "Mostrar";
+      min-height: 34px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 0 12px;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      background: var(--surface-soft);
+      color: var(--text);
+      font-size: 0.84rem;
+      font-weight: 650;
+      white-space: nowrap;
+    }
+
+    .library-collapsible[open] > .library-collapsible-summary::after {
+      content: "Ocultar";
+      background: var(--text);
+      color: var(--surface);
+      border-color: var(--text);
+    }
+
+    .library-collapsible > .playlist-builder,
+    .library-collapsible > .saved-combinations-panel {
+      margin: 0;
+      border: 0;
+      border-top: 1px solid var(--line);
+      border-radius: 0;
+      box-shadow: none;
+      background: color-mix(in srgb, var(--surface) 88%, transparent);
+    }
+
+    .library-collapsible > .playlist-builder {
+      padding: 16px;
+    }
+
+    .library-collapsible > .saved-combinations-panel {
+      padding: 16px;
+    }
+
+    .library-collapsible-summary .selection-count-pill,
+    .library-collapsible-summary .counter {
+      flex: 0 0 auto;
+    }
+
+    /* Ajustes específicos para tablets de aproximadamente 10 polegadas. */
+    @media (min-width: 700px) and (max-width: 1180px) {
+      .shell {
+        width: min(var(--max), calc(100% - 28px));
+        padding: 18px 0 48px;
+      }
+
+      .topbar {
+        align-items: flex-start;
+        flex-direction: column;
+        gap: 12px;
+        padding: 8px 0 18px;
+      }
+
+      .right-tools {
+        width: 100%;
+      }
+
+      .nav {
+        width: 100%;
+        padding: 6px;
+        gap: 6px;
+      }
+
+      .nav button,
+      .theme-toggle {
+        min-height: 42px;
+        padding: 0 16px;
+      }
+
+      .home {
+        min-height: 60vh;
+      }
+
+      .home.compact {
+        grid-template-columns: minmax(170px, 0.72fr) minmax(320px, 1.28fr);
+        gap: 10px;
+        padding: 4px 0 14px;
+      }
+
+      .home.compact .hint {
+        display: none;
+      }
+
+      .home.compact .search-box input,
+      .home.compact .search-box button {
+        min-height: 40px;
+      }
+
+      #resultsView .section-head {
+        align-items: flex-start;
+        flex-direction: column;
+        gap: 12px;
+      }
+
+      #resultsView .section-tools {
+        width: 100%;
+        justify-content: flex-start;
+      }
+
+      .layout-toggle button {
+        min-height: 36px;
+        padding: 0 14px;
+      }
+
+      .cards:not(.list-view).cols-3 {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+
+      .cards.list-view .card {
+        padding: 14px 16px;
+      }
+
+      .cards.list-view .card > div:first-child {
+        grid-template-columns: minmax(220px, 1.2fr) minmax(160px, 0.8fr);
+      }
+
+      .cards.list-view .song-line {
+        display: none;
+      }
+
+      .playlist-builder-controls,
+      .combination-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .builder-row input,
+      .builder-row select,
+      .builder-row button,
+      .builder-row .select-control,
+      .playlist-builder button,
+      .combination-card button {
+        min-height: 42px;
+      }
+
+      .library-collapsible-summary {
+        min-height: 64px;
+        padding: 15px 16px;
+      }
+    }
+
+    @media (max-width: 640px) {
+      .library-collapsible-summary {
+        align-items: stretch;
+        flex-direction: column;
+      }
+
+      .library-collapsible-summary::after,
+      .library-collapsible-summary .selection-count-pill,
+      .library-collapsible-summary .counter {
+        width: 100%;
+      }
+    }
   </style>
 </head>
 <body>
@@ -1704,56 +1911,61 @@
         </div>
       </div>
       <div class="library-actions-stack" aria-label="Ferramentas da biblioteca">
-        <div class="playlist-builder" id="playlistBuilder" aria-label="Montagem de playlist e combinação de músicas">
-          <div class="playlist-builder-head">
-            <div>
+        <details class="library-collapsible" id="playlistBuilderPanel">
+          <summary class="library-collapsible-summary" aria-label="Mostrar ou ocultar montagem do repertório">
+            <span class="library-collapsible-title">
               <strong>Montagem do repertório</strong>
               <span>Marque músicas na lista abaixo e escolha uma das ações.</span>
-            </div>
+            </span>
             <span class="selection-count-pill" id="selectedCounter">0 música(s) selecionada(s)</span>
+          </summary>
+
+          <div class="playlist-builder" id="playlistBuilder" aria-label="Montagem de playlist e combinação de músicas">
+            <div class="playlist-builder-controls">
+              <div class="builder-control-group">
+                <label class="builder-label" for="playlistNameInput">Criar nova playlist</label>
+                <div class="builder-row">
+                  <input type="text" id="playlistNameInput" placeholder="Nome da playlist ou combinação" aria-label="Nome da playlist ou combinação">
+                  <button type="button" id="createPlaylistButton">Criar playlist</button>
+                </div>
+              </div>
+
+              <div class="builder-control-group">
+                <label class="builder-label" for="playlistTargetSelect">Adicionar a uma playlist existente</label>
+                <div class="builder-row">
+                  <select id="playlistTargetSelect" aria-label="Selecionar playlist existente"></select>
+                  <button type="button" id="addToPlaylistButton">Adicionar</button>
+                </div>
+              </div>
+
+              <div class="builder-control-group builder-combination-group">
+                <span class="builder-label">Combinar músicas selecionadas</span>
+                <div class="builder-row">
+                  <label class="select-control medley-save-control" title="Marque para salvar a combinação para abrir depois já pronta">
+                    <input type="checkbox" id="saveCombinationCheckbox">
+                    <span>Salvar combinação</span>
+                  </label>
+                  <button type="button" id="combineSongsButton">Combinar músicas</button>
+                  <button type="button" id="clearSelectionButton">Limpar</button>
+                </div>
+              </div>
+            </div>
           </div>
+        </details>
 
-          <div class="playlist-builder-controls">
-            <div class="builder-control-group">
-              <label class="builder-label" for="playlistNameInput">Criar nova playlist</label>
-              <div class="builder-row">
-                <input type="text" id="playlistNameInput" placeholder="Nome da playlist ou combinação" aria-label="Nome da playlist ou combinação">
-                <button type="button" id="createPlaylistButton">Criar playlist</button>
-              </div>
-            </div>
-
-            <div class="builder-control-group">
-              <label class="builder-label" for="playlistTargetSelect">Adicionar a uma playlist existente</label>
-              <div class="builder-row">
-                <select id="playlistTargetSelect" aria-label="Selecionar playlist existente"></select>
-                <button type="button" id="addToPlaylistButton">Adicionar</button>
-              </div>
-            </div>
-
-            <div class="builder-control-group builder-combination-group">
-              <span class="builder-label">Combinar músicas selecionadas</span>
-              <div class="builder-row">
-                <label class="select-control medley-save-control" title="Marque para salvar a combinação para abrir depois já pronta">
-                  <input type="checkbox" id="saveCombinationCheckbox">
-                  <span>Salvar combinação</span>
-                </label>
-                <button type="button" id="combineSongsButton">Combinar músicas</button>
-                <button type="button" id="clearSelectionButton">Limpar</button>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <section class="saved-combinations-panel" aria-label="Combinações salvas">
-          <div class="saved-combinations-head">
-            <div>
-              <h3>Combinações salvas</h3>
-              <p>Medleys prontos ficam aqui, mantendo ordem das músicas e tons individuais.</p>
-            </div>
+        <details class="library-collapsible" id="savedCombinationsPanel">
+          <summary class="library-collapsible-summary" aria-label="Mostrar ou ocultar combinações salvas">
+            <span class="library-collapsible-title">
+              <strong>Combinações salvas</strong>
+              <span>Medleys prontos ficam aqui, mantendo ordem das músicas e tons individuais.</span>
+            </span>
             <span class="counter" id="combinationCounter">0 combinação(ões)</span>
-          </div>
-          <div class="combination-grid" id="savedCombinationsGrid"></div>
-        </section>
+          </summary>
+
+          <section class="saved-combinations-panel" aria-label="Combinações salvas">
+            <div class="combination-grid" id="savedCombinationsGrid"></div>
+          </section>
+        </details>
       </div>
 
       <div class="cards" id="resultsGrid"></div>
