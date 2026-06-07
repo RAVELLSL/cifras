@@ -925,6 +925,27 @@
       gap: 14px;
     }
 
+    .embedded-dictionary-frame {
+      width: 100%;
+      min-height: min(76vh, 820px);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: #fff;
+      box-shadow: 0 12px 30px rgba(31, 31, 31, 0.045);
+      display: block;
+    }
+
+    html[data-theme="dark"] .embedded-dictionary-frame {
+      box-shadow: 0 12px 30px rgba(0, 0, 0, 0.18);
+    }
+
+    @media (max-width: 640px) {
+      .embedded-dictionary-frame {
+        min-height: 78vh;
+        border-radius: 18px;
+      }
+    }
+
     .dictionary-note {
       margin: 0 0 14px;
       color: var(--muted);
@@ -1869,7 +1890,7 @@
           <button type="button" data-nav="artists">Artistas</button>
           <button type="button" data-nav="playlists">Playlists</button>
           <button type="button" data-nav="styles">Estilos</button>
-          <button type="button" data-open-external-dictionary>Dicionário de acordes</button>
+          <button type="button" data-nav="chordDictionary">Dicionário de acordes</button>
           <button type="button" data-nav="manual">Inserir música</button>
           <button type="button" data-nav="backup">Backup</button>
         </nav>
@@ -2020,16 +2041,17 @@
       <div class="section-head">
         <div>
           <h2>Dicionário de acordes</h2>
-          <p>Consulta externa pelo Dicionário de Acordes do Cifra Club.</p>
+          <p>Consulta interna integrada ao Banco de Cifras, usando o conteúdo do código anexado.</p>
         </div>
-        <span class="counter" id="chordDictionaryCounter">0 acorde(s)</span>
+        <span class="counter" id="chordDictionaryCounter">Dicionário interno</span>
       </div>
       <div class="dictionary-panel">
-        <p class="dictionary-note">A consulta de acordes foi direcionada para o Dicionário de Acordes do Cifra Club.</p>
-        <div class="dictionary-tools">
-          <p class="manual-status" id="chordVectorStatus">O dicionário interno foi substituído pela consulta externa no Cifra Club.</p>
+        <p class="dictionary-note">Use a busca, a montagem por família/variação ou o identificador pelo braço do violão. Este conteúdo é carregado dentro da própria página, sem envio para site externo.</p>
+        <iframe id="internalChordDictionaryFrame" class="embedded-dictionary-frame" title="Dicionário de Acordes integrado"></iframe>
+        <div class="dictionary-tools" aria-live="polite">
+          <p class="manual-status" id="chordVectorStatus">Dicionário de Acordes integrado e pronto para consulta local.</p>
         </div>
-        <div class="dictionary-table-wrap" id="chordDictionaryTableWrap">
+        <div class="dictionary-table-wrap" id="chordDictionaryTableWrap" hidden>
           <table class="dictionary-table" aria-label="Tabela do dicionário de acordes">
             <thead id="chordDictionaryTableHead"></thead>
             <tbody id="chordDictionaryTableBody"></tbody>
@@ -2121,6 +2143,8 @@
     const CHORD_DICTIONARY = JSON.parse(chordDictionaryDataElement ? chordDictionaryDataElement.textContent : "[]");
     window.BANCO_CIFRAS_CHORD_DICTIONARY = CHORD_DICTIONARY;
     const CHORD_ROOTS = ["A", "A#/Bb", "B", "C", "C#/Db", "D", "D#/Eb", "E", "F", "F#/Gb", "G", "G#/Ab"];
+    const INTERNAL_CHORD_DICTIONARY_HTML = "\n<!doctype html>\n<html lang=\"pt-BR\">\n<head>\n  <meta charset=\"utf-8\" />\n  <meta name=\"viewport\" content=\"width=device-width,initial-scale=1\" />\n  <title>Dicionário de Acordes<\/title>\n  <style>\n    :root{\n      --bg:#f5f6f8; --panel:#ffffff; --panel2:#fbfcfe; --ink:#171923; --muted:#667085;\n      --line:#e3e7ef; --line2:#d0d5dd; --soft:#f2f4f7; --soft2:#eef2f7;\n      --accent:#101828; --accent-weak:#eef2ff; --danger:#b42318; --ok:#047857;\n      --shadow:0 18px 42px rgba(16,24,40,.07); --radius:24px; --radius2:16px;\n    }\n    *{box-sizing:border-box}\n    html{background:var(--bg);scroll-behavior:smooth}\n    body{margin:0;min-height:100%;font-family:Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont,\"Segoe UI\",sans-serif;color:var(--ink);background:radial-gradient(circle at top left,#ffffff 0,#f5f6f8 38%,#f1f3f6 100%);}\n    button, input, select{font:inherit}\n    button{border:0}\n    .app{max-width:1160px;margin:0 auto;padding:26px 18px 56px}\n    .hero{display:flex;justify-content:center;text-align:center;margin-bottom:18px}\n    h1{font-size:clamp(32px,4.6vw,56px);line-height:.95;letter-spacing:-.065em;margin:0 0 12px;font-weight:880}\n    .lead{max-width:820px;margin:0;color:#475467;font-size:15.5px;line-height:1.62}\n    .hero-actions{display:flex;gap:8px;align-items:center;justify-content:flex-end;flex-wrap:wrap}\n    .badge{display:inline-flex;align-items:center;gap:7px;border:1px solid var(--line);background:#fff;border-radius:999px;padding:9px 12px;color:#475467;font-size:12.5px;white-space:nowrap;box-shadow:0 4px 16px rgba(16,24,40,.035)}\n    .badge strong{color:#101828}\n    .toolbox{background:rgba(255,255,255,.88);border:1px solid var(--line);border-radius:28px;box-shadow:var(--shadow);overflow:hidden;backdrop-filter:blur(8px);margin-bottom:18px}\n    .tabs{display:flex;gap:6px;padding:10px;border-bottom:1px solid var(--line);background:rgba(251,252,254,.82);position:sticky;top:0;z-index:3}\n    .tab{appearance:none;cursor:pointer;flex:1;border-radius:16px;padding:12px 14px;background:transparent;color:#475467;font-weight:780;display:flex;align-items:center;justify-content:center;gap:8px;transition:.16s;border:1px solid transparent}\n    .tab:hover{background:#fff;border-color:var(--line)}\n    .tab.active{background:#101828;color:#fff;box-shadow:0 12px 26px rgba(16,24,40,.18)}\n    .tab small{font-weight:700;opacity:.72}\n    .pane{display:none;padding:20px}\n    .pane.active{display:block}\n    .search-layout{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:12px;align-items:center}\n    .search-input-wrap{position:relative}\n    .search-input-wrap span{display:none}\n    .search-input-wrap input{width:100%;height:58px;border:1px solid var(--line2);border-radius:18px;background:#fff;color:var(--ink);font-size:20px;padding:0 18px;outline:none;transition:.18s;box-shadow:0 1px 0 rgba(16,24,40,.02)}\n    .search-input-wrap input:focus{border-color:#98a2b3;box-shadow:0 0 0 5px rgba(152,162,179,.16)}\n    .primary, .secondary, .ghost, .chip{appearance:none;cursor:pointer;border-radius:999px;border:1px solid var(--line);background:#fff;color:#1f2937;font-weight:820;display:inline-flex;align-items:center;justify-content:center;gap:8px;text-decoration:none;user-select:none;transition:.16s;white-space:nowrap}\n    .primary{height:58px;padding:0 22px;background:#101828;border-color:#101828;color:#fff;box-shadow:0 10px 24px rgba(16,24,40,.18)}\n    .secondary{height:44px;padding:0 16px;background:#fff}\n    .ghost{height:44px;padding:0 16px;background:transparent}\n    .primary:hover,.secondary:hover,.ghost:hover,.chip:hover{transform:translateY(-1px);filter:brightness(.99);border-color:#aeb7c6}\n    .chips{display:flex;gap:8px;flex-wrap:wrap;margin-top:16px}\n    .chip{height:34px;padding:0 12px;font-size:13px;background:#fff}\n    .helper-row{display:flex;justify-content:space-between;gap:18px;align-items:flex-start;margin-top:12px;color:#667085;font-size:13px;line-height:1.5}\n    .helper-row strong{color:#344054}\n    .build-grid{display:grid;grid-template-columns:220px minmax(0,1fr) 200px;gap:14px;align-items:end}\n    .field{display:flex;flex-direction:column;gap:7px}\n    .field.full{grid-column:1/-1}\n    label{font-size:11px;text-transform:uppercase;letter-spacing:.09em;color:#667085;font-weight:840}\n    select,input[type=\"text\"]{width:100%;height:48px;border:1px solid var(--line2);border-radius:15px;background:#fff;color:#1f2937;padding:0 12px;font-size:14.5px;outline:none;transition:.16s}\n    select:focus,input[type=\"text\"]:focus{border-color:#98a2b3;box-shadow:0 0 0 4px rgba(152,162,179,.14)}\n    .hint{font-size:13px;color:#667085;line-height:1.55;margin:11px 0 0}\n    .inline-actions{display:flex;flex-wrap:wrap;gap:10px;margin-top:16px}\n    .workspace{display:grid;grid-template-columns:340px minmax(0,1fr);gap:18px;align-items:start;margin-top:18px}\n    .workspace[hidden]{display:none!important}\n    .card{background:rgba(255,255,255,.92);border:1px solid var(--line);border-radius:24px;box-shadow:var(--shadow);padding:18px;min-width:0}\n    .card.sticky{position:sticky;top:76px}\n    .section-title{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:12px}\n    .small-title{font-size:18px;font-weight:880;letter-spacing:-.035em;margin:0}\n    .eyebrow{font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:#667085;font-weight:850;margin:0 0 8px}\n    .result-head{display:flex;justify-content:space-between;gap:16px;align-items:flex-start;margin-bottom:14px}\n    .result-title{margin:0;font-size:clamp(26px,3vw,38px);letter-spacing:-.045em;line-height:1.02}\n    .subtitle{color:#667085;margin:8px 0 0;line-height:1.45;font-size:14px}\n    .notes{display:flex;flex-wrap:wrap;gap:7px;margin-top:14px}\n    .note{border:1px solid var(--line);background:var(--soft);border-radius:999px;padding:7px 10px;font-weight:820;font-size:12.5px;color:#344054}\n    .aliases{font-size:12.5px;color:#667085;line-height:1.5;margin-top:12px;border-top:1px solid var(--line);padding-top:12px}\n    .status{border:1px solid #fecaca;background:#fff1f2;color:#7f1d1d;border-radius:16px;padding:15px 16px;line-height:1.5;font-size:14px}\n    .status.ok{border-color:#bbf7d0;background:#f0fdf4;color:#14532d}\n    .voicings{display:grid;grid-template-columns:repeat(auto-fill,minmax(172px,1fr));gap:14px;margin-top:12px}\n    .voicing{border:1px solid var(--line);background:#fff;border-radius:20px;padding:14px;box-shadow:0 8px 22px rgba(16,24,40,.045);transition:.16s}\n    .voicing:hover{transform:translateY(-2px);box-shadow:0 16px 34px rgba(16,24,40,.08)}\n    .voicing-top{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:8px}\n    .voicing-name{font-weight:880;letter-spacing:-.02em;font-size:14px}\n    .voicing-meta{font-size:12px;color:#667085;background:#f8fafc;border:1px solid #edf1f6;border-radius:999px;padding:4px 7px}\n    .shape{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:12px;color:#475467;text-align:center;margin-top:8px;background:#f8fafc;border:1px solid #eef2f7;border-radius:999px;padding:6px 8px}\n    .diagram{position:relative;width:136px;height:168px;margin:4px auto 0;padding-top:20px}\n    .diagram .top-labels{position:absolute;top:0;left:8px;right:8px;display:grid;grid-template-columns:repeat(6,1fr);font-size:12px;color:#344054;text-align:center;font-weight:850}\n    .diagram .fret-num{position:absolute;left:-5px;top:33px;font-size:11px;color:#667085;font-weight:760}\n    .neck{position:absolute;left:12px;right:12px;top:28px;bottom:10px;border-top:4px solid #101828}\n    .string{position:absolute;top:0;bottom:0;width:1px;background:#98a2b3}.string.s0{left:0}.string.s1{left:20%}.string.s2{left:40%}.string.s3{left:60%}.string.s4{left:80%}.string.s5{left:100%}\n    .fret{position:absolute;left:0;right:0;height:1px;background:#cbd5e1}.fret.f1{top:20%}.fret.f2{top:40%}.fret.f3{top:60%}.fret.f4{top:80%}.fret.f5{top:100%}\n    .dot{position:absolute;min-width:24px;height:22px;padding:0 4px;border-radius:999px;background:#101828;color:#fff;display:flex;align-items:center;justify-content:center;font-size:9.5px;font-weight:850;transform:translate(-50%,-50%);box-shadow:0 8px 16px rgba(16,24,40,.22)}\n    .manual-layout{display:grid;grid-template-columns:minmax(0,1fr);gap:16px}\n    .fretboard-wrap{overflow:auto;border:1px solid var(--line);border-radius:26px;background:linear-gradient(180deg,#fbfcfe 0%,#f4f6fa 100%);padding:18px;box-shadow:inset 0 1px 0 rgba(255,255,255,.95)}\n    .fretboard{min-width:1000px;display:flex;flex-direction:column;gap:10px}\n    .fb-top,.fb-row{display:grid;grid-template-columns:84px 52px 58px minmax(760px,1fr);gap:10px;align-items:center}\n    .fb-gap{height:1px}\n    .fb-fret-numbers,.fb-neck-row{display:grid;grid-template-columns:repeat(12,minmax(58px,1fr));gap:0}\n    .fb-head{font-size:11px;color:#667085;text-align:center;font-weight:850;text-transform:uppercase;letter-spacing:.08em}\n    .fb-string-label{font-size:13px;color:#344054;font-weight:850;white-space:nowrap}\n    .fb-mini{height:42px;border:1px solid #d6dae2;background:#fff;border-radius:14px;color:#344054;font-size:12px;display:flex;align-items:center;justify-content:center;cursor:pointer;transition:.12s;font-weight:850;box-shadow:0 4px 14px rgba(16,24,40,.04)}\n    .fb-mini:hover{transform:translateY(-1px);border-color:#98a2b3}\n    .fb-mini.selected{background:#101828;color:#fff;border-color:#101828;box-shadow:0 10px 20px rgba(16,24,40,.16)}\n    .fb-mini.mute.selected{background:#9f1239;border-color:#9f1239}\n    .fb-mini.open.selected{background:#0f172a;border-color:#0f172a}\n    .fb-neck-row{position:relative;border:1px solid #b69269;border-radius:18px;overflow:hidden;background:linear-gradient(180deg,#cba57a 0%,#b98f63 48%,#c69d74 100%);box-shadow:inset 0 1px 0 rgba(255,255,255,.28), inset 0 -1px 0 rgba(91,55,24,.15), 0 8px 20px rgba(16,24,40,.06)}\n    .fb-neck-row::before{content:\"\";position:absolute;left:0;right:0;top:50%;height:2px;background:linear-gradient(90deg,rgba(229,231,235,.15),rgba(255,255,255,.95),rgba(229,231,235,.15));transform:translateY(-50%);box-shadow:0 0 0 1px rgba(17,24,39,.06)}\n    .fb-fret-slot{position:relative;height:54px;border:0;background:transparent;color:#fff;cursor:pointer;transition:.12s;padding:0;display:flex;align-items:center;justify-content:center;overflow:hidden}\n    .fb-fret-slot::after{content:\"\";position:absolute;top:0;right:0;bottom:0;width:4px;background:linear-gradient(180deg,#eef2f7 0%,#9ca3af 45%,#f8fafc 100%);box-shadow:-1px 0 0 rgba(17,24,39,.18)}\n    .fb-fret-slot:hover{filter:brightness(1.04)}\n    .fb-fret-slot .slot-note{position:absolute;right:8px;bottom:5px;font-size:10px;font-weight:800;color:rgba(255,255,255,.72);letter-spacing:.02em}\n    .fb-fret-slot .slot-dot{opacity:0;transform:scale(.82);transition:.12s;position:absolute;left:50%;top:50%;translate:-50% -50%;min-width:28px;height:28px;padding:0 6px;border-radius:999px;background:#101828;color:#fff;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:850;box-shadow:0 10px 18px rgba(16,24,40,.24)}\n    .fb-fret-slot.selected .slot-dot{opacity:1;transform:scale(1)}\n    .fb-fret-slot.selected .slot-note{opacity:0}\n    .fb-fret-slot.marker-single .marker-pearl,.fb-fret-slot.marker-double .marker-pearl,.fb-fret-slot.marker-double .marker-pearl2{position:absolute;border-radius:999px;background:radial-gradient(circle at 35% 35%,rgba(255,255,255,.95),rgba(226,232,240,.75) 48%,rgba(255,255,255,.18) 100%);box-shadow:inset 0 1px 1px rgba(255,255,255,.65),0 0 0 1px rgba(0,0,0,.08)}\n    .fb-fret-slot.marker-single .marker-pearl{width:10px;height:10px;left:50%;bottom:8px;translate:-50% 0;opacity:.7}\n    .fb-fret-slot.marker-double .marker-pearl{width:10px;height:10px;left:50%;top:13px;translate:-50% 0;opacity:.7}\n    .fb-fret-slot.marker-double .marker-pearl2{width:10px;height:10px;left:50%;bottom:8px;translate:-50% 0;opacity:.7}\n    .fb-nut{position:relative}\n    .fb-nut::after{content:\"\";position:absolute;left:-2px;top:0;bottom:0;width:6px;background:linear-gradient(180deg,#fff,#d8dee8,#fff);border-radius:8px;box-shadow:1px 0 0 rgba(17,24,39,.16)}\n    .identified{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:10px;margin-top:12px}.match{border:1px solid var(--line);background:#fff;border-radius:16px;padding:12px 14px}.match strong{display:block;font-size:17px;letter-spacing:-.02em;margin-bottom:4px}.match span{color:#667085;font-size:13px;line-height:1.45}\n    .muted{color:#667085}.sr-only{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0,0,0,0)}\n    @media(max-width:980px){.app{padding:18px 12px 42px}.workspace{grid-template-columns:1fr}.card.sticky{position:static}.build-grid{grid-template-columns:1fr 1fr}.field.full{grid-column:1/-1}.tabs{position:static}.search-layout{grid-template-columns:1fr}.primary{width:100%}.fb-top,.fb-row{grid-template-columns:72px 48px 54px minmax(720px,1fr)}}\n    @media(max-width:640px){.tabs{display:grid;grid-template-columns:1fr}.tab{justify-content:flex-start}.pane{padding:14px}.build-grid{grid-template-columns:1fr}.helper-row{display:block}.voicings{grid-template-columns:1fr}.card{padding:15px;border-radius:20px}.search-input-wrap input{font-size:17px}.hero-actions .badge{white-space:normal}.inline-actions .secondary,.inline-actions .ghost,.inline-actions .primary{width:100%}}\n  <\/style>\n<\/head>\n<body>\n<div class=\"app\">\n  <header class=\"hero\">\n    <h1>Dicionário de Acordes<\/h1>\n  <\/header>\n\n  <main>\n    <section class=\"toolbox\" aria-label=\"Ferramentas do dicionário\">\n      <nav class=\"tabs\" aria-label=\"Modos de uso\">\n        <button type=\"button\" class=\"tab active\" data-tab-target=\"search\" aria-selected=\"true\">Buscar <small>por cifra<\/small><\/button>\n        <button type=\"button\" class=\"tab\" data-tab-target=\"build\" aria-selected=\"false\">Montar <small>por opções<\/small><\/button>\n        <button type=\"button\" class=\"tab\" data-tab-target=\"identify\" aria-selected=\"false\">Identificar <small>no braço<\/small><\/button>\n      <\/nav>\n\n      <section class=\"pane active\" data-tab-pane=\"search\">\n        <div class=\"search-layout\">\n          <div class=\"search-input-wrap\">\n            <span>Acorde<\/span>\n            <input id=\"searchInput\" autocomplete=\"off\" placeholder=\"\" value=\"\" aria-label=\"Digite um acorde\" />\n          <\/div>\n          <button id=\"searchBtn\" class=\"primary\">Buscar acorde<\/button>\n        <\/div>\n      <\/section>\n\n      <section class=\"pane\" data-tab-pane=\"build\" hidden>\n        <div class=\"build-grid\">\n          <div class=\"field\">\n            <label for=\"rootSelect\">Nota base<\/label>\n            <select id=\"rootSelect\"><\/select>\n          <\/div>\n          <div class=\"field\">\n            <label for=\"typeSelect\">Família / variação<\/label>\n            <select id=\"typeSelect\"><\/select>\n          <\/div>\n          <div class=\"field\">\n            <label for=\"bassSelect\">Baixo<\/label>\n            <select id=\"bassSelect\"><\/select>\n          <\/div>\n          <div class=\"field full\">\n            <label for=\"aliasSelect\">Escrita equivalente<\/label>\n            <select id=\"aliasSelect\"><\/select>\n          <\/div>\n        <\/div>\n        <p class=\"hint\">Este modo evita erro de digitação e permite percorrer as variações do mesmo acorde, agora organizadas por categoria: básicos, suspensos, adicionados, sextas, sétimas, dominantes alterados, nonas, décimas primeiras, décimas terceiras e alterações avançadas.<\/p>\n        <div class=\"inline-actions\">\n          <button id=\"buildBtn\" class=\"primary\">Gerar posições<\/button>\n          <button id=\"sendToBuilderBtn\" class=\"secondary\">Enviar posição para o braço<\/button>\n          <button id=\"clearBassBtn\" class=\"ghost\">Remover baixo<\/button>\n        <\/div>\n      <\/section>\n\n      <section class=\"pane\" data-tab-pane=\"identify\" hidden>\n        <div class=\"manual-layout\">\n          <div>\n            <h2 class=\"small-title\">Identificador pelo braço do violão<\/h2>\n            <p class=\"hint\">Agora o braço foi redesenhado para ficar mais próximo da leitura visual de um violão. Use X para abafar, 0 para corda solta e clique nas casas para montar a posição desejada.<\/p>\n          <\/div>\n          <div class=\"fretboard-wrap\">\n            <div class=\"fretboard\" id=\"fretboard\"><\/div>\n          <\/div>\n          <div class=\"inline-actions\">\n            <button id=\"identifyBtn\" class=\"primary\">Identificar acorde montado<\/button>\n            <button id=\"clearBuilderBtn\" class=\"secondary\">Limpar braço<\/button>\n            <button id=\"copyBuilderBtn\" class=\"ghost\">Copiar posição<\/button>\n          <\/div>\n          <div id=\"builderStatus\"><\/div>\n          <div class=\"identified\" id=\"identified\"><\/div>\n        <\/div>\n      <\/section>\n    <\/section>\n\n    <section class=\"workspace\" id=\"workspace\" aria-label=\"Resultado do acorde\" hidden>\n      <aside class=\"card sticky\" id=\"summaryPanel\">\n        <p class=\"eyebrow\">Acorde atual<\/p>\n        <div id=\"summary\"><\/div>\n      <\/aside>\n      <section class=\"card\" id=\"resultsPanel\">\n        <div class=\"section-title\">\n          <div>\n            <p class=\"eyebrow\">Diagramas<\/p>\n            <h2 class=\"small-title\">Posições sugeridas<\/h2>\n          <\/div>\n        <\/div>\n        <div id=\"results\"><\/div>\n      <\/section>\n    <\/section>\n  <\/main>\n<\/div>\n\n<script>\n(function(){\n  const NOTE_VAL = {C:0,'B#':0,'C#':1,Db:1,D:2,'D#':3,Eb:3,E:4,Fb:4,'E#':5,F:5,'F#':6,Gb:6,G:7,'G#':8,Ab:8,A:9,'A#':10,Bb:10,B:11,Cb:11};\n  const SHARP = ['C','C#','D','D#','E','F','F#','G','G#','A','A#','B'];\n  const FLAT = ['C','Db','D','Eb','E','F','Gb','G','Ab','A','Bb','B'];\n  const BR = {C:'Dó','C#':'Dó sustenido',Db:'Ré bemol',D:'Ré','D#':'Ré sustenido',Eb:'Mi bemol',E:'Mi',F:'Fá','F#':'Fá sustenido',Gb:'Sol bemol',G:'Sol','G#':'Sol sustenido',Ab:'Lá bemol',A:'Lá','A#':'Lá sustenido',Bb:'Si bemol',B:'Si'};\n  const INTERVAL_LABEL = {0:'fundamental',1:'nona menor',2:'nona',3:'terça menor / nona aumentada',4:'terça maior',5:'quarta justa / décima primeira',6:'quinta bemol / décima primeira aumentada',7:'quinta justa',8:'quinta aumentada / décima terceira menor',9:'sexta / décima terceira',10:'sétima menor',11:'sétima maior'};\n  const STANDARD_TUNING = [4,9,2,7,11,4];\n  const STRING_NAMES = ['6ª E','5ª A','4ª D','3ª G','2ª B','1ª E'];\n  const ROOT_OPTIONS = ['C','C#','Db','D','D#','Eb','E','F','F#','Gb','G','G#','Ab','A','A#','Bb','B'];\n  const BASS_OPTIONS = ['',...ROOT_OPTIONS];\n  const TYPES = [\n    {id:'maj', cat:'basicos', label:'Maior', q:'', aliases:['','M','maj'], intervals:[0,4,7], desc:'tríade maior'},\n    {id:'m', cat:'basicos', label:'Menor', q:'m', aliases:['m','min','mi','-'], intervals:[0,3,7], desc:'tríade menor'},\n    {id:'5', cat:'basicos', label:'Quinta', q:'5', aliases:['5','no3'], intervals:[0,7], desc:'power chord / fundamental e quinta'},\n    {id:'aug', cat:'basicos', label:'Aumentado', q:'+', aliases:['+','aug','(#5)','5+','aum'], intervals:[0,4,8], desc:'tríade aumentada'},\n    {id:'dim', cat:'basicos', label:'Diminuto', q:'dim', aliases:['dim','º','°','o'], intervals:[0,3,6], desc:'tríade diminuta'},\n    {id:'sus2', cat:'suspensos', label:'Segunda suspensa', q:'sus2', aliases:['sus2','2'], intervals:[0,2,7], desc:'segunda suspensa'},\n    {id:'sus4', cat:'suspensos', label:'Quarta suspensa', q:'sus4', aliases:['sus4','4','sus'], intervals:[0,5,7], desc:'quarta suspensa'},\n    {id:'sus4add9', cat:'suspensos', label:'Quarta suspensa com nona', q:'sus4(9)', aliases:['sus4(9)','sus4add9','sus9','4(9)'], intervals:[0,5,7,2], desc:'quarta suspensa com nona'},\n    {id:'add2', cat:'adicionados', label:'Segunda adicionada', q:'add2', aliases:['add2','(add2)'], intervals:[0,4,7,2], desc:'tríade maior com segunda adicional'},\n    {id:'add4', cat:'adicionados', label:'Quarta adicionada', q:'add4', aliases:['add4','(add4)','add11'], intervals:[0,4,7,5], desc:'tríade maior com quarta adicional'},\n    {id:'add9', cat:'adicionados', label:'Nona adicionada', q:'add9', aliases:['add9','(add9)','add2(9)'], intervals:[0,4,7,2], desc:'tríade maior com nona adicional'},\n    {id:'madd9', cat:'adicionados', label:'Menor com nona adicionada', q:'m(add9)', aliases:['m(add9)','madd9','m(add2)','madd2'], intervals:[0,3,7,2], desc:'tríade menor com nona adicional'},\n    {id:'madd11', cat:'adicionados', label:'Menor com décima primeira adicionada', q:'m(add11)', aliases:['m(add11)','madd11','m(add4)','madd4'], intervals:[0,3,7,5], desc:'tríade menor com décima primeira adicional'},\n    {id:'6', cat:'sextas', label:'Sexta', q:'6', aliases:['6'], intervals:[0,4,7,9], desc:'maior com sexta'},\n    {id:'m6', cat:'sextas', label:'Menor com sexta', q:'m6', aliases:['m6'], intervals:[0,3,7,9], desc:'menor com sexta'},\n    {id:'69', cat:'sextas', label:'Sexta e nona', q:'6/9', aliases:['6/9','69','6(9)'], intervals:[0,4,7,9,2], desc:'maior com sexta e nona'},\n    {id:'m69', cat:'sextas', label:'Menor com sexta e nona', q:'m6/9', aliases:['m6/9','m69','m6(9)'], intervals:[0,3,7,9,2], desc:'menor com sexta e nona'},\n    {id:'7', cat:'setimas', label:'Sétima dominante', q:'7', aliases:['7'], intervals:[0,4,7,10], desc:'maior com sétima menor'},\n    {id:'7sus4', cat:'setimas', label:'Sétima e quarta suspensa', q:'7sus4', aliases:['7sus4','7/4','7(4)','7sus'], intervals:[0,5,7,10], desc:'sétima com quarta suspensa'},\n    {id:'7sus4b9', cat:'setimas', label:'Sétima suspensa com nona menor', q:'7sus4(b9)', aliases:['7sus4(b9)','7/4(b9)','7(b9)sus4'], intervals:[0,5,7,10,1], desc:'sétima suspensa com nona menor'},\n    {id:'7sus4add9', cat:'setimas', label:'Sétima suspensa com nona', q:'7sus4(9)', aliases:['7sus4(9)','7sus9','7/4(9)','7(4,9)'], intervals:[0,5,7,10,2], desc:'sétima suspensa com nona'},\n    {id:'maj7', cat:'setimas', label:'Sétima maior', q:'7M', aliases:['7M','maj7','M7','Δ','△','7+'], intervals:[0,4,7,11], desc:'maior com sétima maior'},\n    {id:'m7', cat:'setimas', label:'Menor com sétima', q:'m7', aliases:['m7','min7','mi7','-7'], intervals:[0,3,7,10], desc:'menor com sétima menor'},\n    {id:'mmaj7', cat:'setimas', label:'Menor com sétima maior', q:'m(7M)', aliases:['m(7M)','m7M','m(maj7)','mM7','m7+'], intervals:[0,3,7,11], desc:'menor com sétima maior'},\n    {id:'maj7b5', cat:'setimas', label:'Sétima maior e quinta bemol', q:'7M(b5)', aliases:['7M(b5)','maj7(b5)','7+(b5)','7M-5'], intervals:[0,4,6,11], desc:'maior com sétima maior e quinta diminuta'},\n    {id:'m7b5', cat:'setimas', label:'Meio-diminuto', q:'m7(b5)', aliases:['m7(b5)','m7-5','m5-/7','ø','ø7','mi7(b5)'], intervals:[0,3,6,10], desc:'menor com sétima e quinta bemol'},\n    {id:'dim7', cat:'setimas', label:'Sétima diminuta', q:'º7', aliases:['º7','°7','dim7','o7'], intervals:[0,3,6,9], desc:'diminuto com sétima diminuta'},\n    {id:'7b5', cat:'alterados', label:'Sétima e quinta bemol', q:'7(b5)', aliases:['7(b5)','7-5','7(b11)','7(#11 omit5)'], intervals:[0,4,6,10], desc:'dominante com quinta bemol'},\n    {id:'7sharp5', cat:'alterados', label:'Sétima e quinta aumentada', q:'7(#5)', aliases:['7(#5)','7+5','+7','7(5+)'], intervals:[0,4,8,10], desc:'dominante com quinta aumentada'},\n    {id:'7b9', cat:'alterados', label:'Sétima e nona bemol', q:'7(b9)', aliases:['7(b9)','7-9'], intervals:[0,4,7,10,1], desc:'dominante com nona menor'},\n    {id:'7sharp9', cat:'alterados', label:'Sétima e nona sustenida', q:'7(#9)', aliases:['7(#9)','7+9'], intervals:[0,4,7,10,3], desc:'dominante com nona aumentada'},\n    {id:'7b9sharp5', cat:'alterados', label:'Sétima aumentada e nona bemol', q:'7(#5,b9)', aliases:['7(#5,b9)','7(b9,#5)','+7(b9)','7+5(b9)'], intervals:[0,4,8,10,1], desc:'dominante com quinta aumentada e nona menor'},\n    {id:'7sharp5sharp9', cat:'alterados', label:'Sétima aumentada e nona aumentada', q:'7(#5,#9)', aliases:['7(#5,#9)','7(#9,#5)','+7(#9)','7+5(#9)'], intervals:[0,4,8,10,3], desc:'dominante com quinta aumentada e nona aumentada'},\n    {id:'7b5b9', cat:'alterados', label:'Sétima com quinta e nona bemóis', q:'7(b5,b9)', aliases:['7(b5,b9)','7(b9,b5)','7-5(b9)','7(b9,#11)'], intervals:[0,4,6,10,1], desc:'dominante com quinta bemol e nona menor'},\n    {id:'7b5sharp9', cat:'alterados', label:'Sétima com quinta bemol e nona aumentada', q:'7(b5,#9)', aliases:['7(b5,#9)','7(#9,b5)','7-5(#9)'], intervals:[0,4,6,10,3], desc:'dominante com quinta bemol e nona aumentada'},\n    {id:'9', cat:'nonas', label:'Nona dominante', q:'9', aliases:['9','7(9)','7/9'], intervals:[0,4,7,10,2], desc:'dominante com nona'},\n    {id:'7b9add13', cat:'nonas', label:'Sétima, nona menor e décima terceira', q:'7(b9,13)', aliases:['7(b9,13)','7(13,b9)','7(b9)(13)'], intervals:[0,4,7,10,1,9], desc:'dominante com nona menor e décima terceira'},\n    {id:'7sharp9add13', cat:'nonas', label:'Sétima, nona aumentada e décima terceira', q:'7(#9,13)', aliases:['7(#9,13)','7(13,#9)','7(#9)(13)'], intervals:[0,4,7,10,3,9], desc:'dominante com nona aumentada e décima terceira'},\n    {id:'9b5', cat:'nonas', label:'Nona com quinta bemol', q:'9(b5)', aliases:['9(b5)','9-5','7(9,b5)'], intervals:[0,4,6,10,2], desc:'dominante com nona e quinta bemol'},\n    {id:'9sharp5', cat:'nonas', label:'Nona com quinta aumentada', q:'9(#5)', aliases:['9(#5)','9+5','7(9,#5)'], intervals:[0,4,8,10,2], desc:'dominante com nona e quinta aumentada'},\n    {id:'maj9', cat:'nonas', label:'Nona maior', q:'7M(9)', aliases:['7M(9)','maj9','M9','7M/9','7+/9','7+(9)'], intervals:[0,4,7,11,2], desc:'maior com sétima maior e nona'},\n    {id:'m9', cat:'nonas', label:'Menor com nona', q:'m9', aliases:['m9','m7(9)','m7/9','min9'], intervals:[0,3,7,10,2], desc:'menor com sétima e nona'},\n    {id:'mmaj9', cat:'nonas', label:'Menor com sétima maior e nona', q:'m7M(9)', aliases:['m7M(9)','m(7M,9)','m(maj9)','mM9','m7+/9'], intervals:[0,3,7,11,2], desc:'menor com sétima maior e nona'},\n    {id:'11', cat:'decimas', label:'Décima primeira', q:'11', aliases:['11','7(11)','7/11'], intervals:[0,4,7,10,2,5], desc:'dominante com nona e décima primeira'},\n    {id:'m7add11', cat:'decimas', label:'Menor com sétima e décima primeira', q:'m7(11)', aliases:['m7(11)','m7/11'], intervals:[0,3,7,10,5], desc:'menor com sétima e décima primeira'},\n    {id:'m11', cat:'decimas', label:'Menor com décima primeira', q:'m11', aliases:['m11','m7(9,11)','m7/9/11','m9(11)'], intervals:[0,3,7,10,2,5], desc:'menor com sétima, nona e décima primeira'},\n    {id:'7sharp11', cat:'decimas', label:'Sétima e décima primeira aumentada', q:'7(#11)', aliases:['7(#11)','7(#4)','7(11+)'], intervals:[0,4,7,10,6], desc:'dominante com décima primeira aumentada'},\n    {id:'9sharp11', cat:'decimas', label:'Nona e décima primeira aumentada', q:'9(#11)', aliases:['9(#11)','7(9,#11)','9(#4)'], intervals:[0,4,7,10,2,6], desc:'dominante com nona e décima primeira aumentada'},\n    {id:'maj7sharp11', cat:'decimas', label:'Sétima maior e décima primeira aumentada', q:'7M(#11)', aliases:['7M(#11)','maj7(#11)','7+(#11)','7M(#4)'], intervals:[0,4,7,11,6], desc:'maior com sétima maior e décima primeira aumentada'},\n    {id:'maj9sharp11', cat:'decimas', label:'Nona maior e décima primeira aumentada', q:'7M(9,#11)', aliases:['7M(9,#11)','maj9(#11)','7+/9(#11)','7M(9,#4)'], intervals:[0,4,7,11,2,6], desc:'maior com sétima maior, nona e décima primeira aumentada'},\n    {id:'13', cat:'decimas', label:'Décima terceira', q:'13', aliases:['13','7(13)','7/13','7(9,13)'], intervals:[0,4,7,10,2,9], desc:'dominante com nona e décima terceira'},\n    {id:'7b13', cat:'decimas', label:'Sétima e décima terceira menor', q:'7(b13)', aliases:['7(b13)','7-13'], intervals:[0,4,7,10,8], desc:'dominante com décima terceira menor'},\n    {id:'maj7add13', cat:'decimas', label:'Sétima maior com décima terceira', q:'7M(13)', aliases:['7M(13)','maj7(13)','7+(13)','7M/13'], intervals:[0,4,7,11,9], desc:'maior com sétima maior e décima terceira'},\n    {id:'maj13', cat:'decimas', label:'Décima terceira maior', q:'7M(9,13)', aliases:['maj13','M13','7M(9,13)','7+(9,13)','7M13'], intervals:[0,4,7,11,2,9], desc:'maior com sétima maior, nona e décima terceira'},\n    {id:'m13', cat:'decimas', label:'Menor com décima terceira', q:'m13', aliases:['m13','m7(9,13)','m9(13)'], intervals:[0,3,7,10,2,9], desc:'menor com sétima, nona e décima terceira'},\n    {id:'7b9b13', cat:'alterados_avancados', label:'Sétima, nona menor e décima terceira menor', q:'7(b9,b13)', aliases:['7(b9,b13)','7(b9)(b13)','7-9-13'], intervals:[0,4,7,10,1,8], desc:'dominante alterado com b9 e b13'},\n    {id:'7sharp9sharp11', cat:'alterados_avancados', label:'Sétima, nona aumentada e décima primeira aumentada', q:'7(#9,#11)', aliases:['7(#9,#11)','7(#9,#4)'], intervals:[0,4,6,10,3], desc:'dominante alterado com #9 e #11'},\n    {id:'7sharp9b13', cat:'alterados_avancados', label:'Sétima, nona aumentada e décima terceira menor', q:'7(#9,b13)', aliases:['7(#9,b13)','7(#9)(b13)'], intervals:[0,4,7,10,3,8], desc:'dominante alterado com #9 e b13'},\n    {id:'7alt', cat:'alterados_avancados', label:'Dominante alterado', q:'7alt', aliases:['7alt','7alterado'], intervals:[0,4,10,1,3,6,8], desc:'dominante alterado com nona e quinta alteradas'},\n    {id:'maj13sharp11', cat:'alterados_avancados', label:'Décima terceira maior com décima primeira aumentada', q:'7M(9,#11,13)', aliases:['7M(9,#11,13)','maj13(#11)','7M13(#11)'], intervals:[0,4,7,11,2,6,9], desc:'maior com sétima maior, nona, décima primeira aumentada e décima terceira'}\n  ];\n  const CATEGORY_LABELS = {\n    basicos:'Básicos', suspensos:'Suspensos', adicionados:'Acordes adicionados', sextas:'Sextas e 6/9', setimas:'Sétimas', alterados:'Dominantes alterados', nonas:'Nonas', decimas:'11ª e 13ª', alterados_avancados:'Alterados avançados'\n  };\n  const CATEGORY_ORDER = ['basicos','suspensos','adicionados','sextas','setimas','alterados','nonas','decimas','alterados_avancados'];\n  const TYPE_BY_ID = Object.fromEntries(TYPES.map(t => [t.id,t]));\n  const $ = (id)=>document.getElementById(id);\n  const mod = (n)=>((n%12)+12)%12;\n  const uniq = (arr)=>[...new Set(arr.map(mod))];\n  const sortPcs = (arr)=>uniq(arr).sort((a,b)=>a-b);\n  \n  function pcName(pc, preferFlat=false){ return (preferFlat?FLAT:SHARP)[mod(pc)]; }\n  function brName(noteOrPc, preferFlat=false){ const n = typeof noteOrPc==='number'?pcName(noteOrPc, preferFlat):noteOrPc; return BR[n] || BR[pcName(NOTE_VAL[n] ?? 0, preferFlat)] || n; }\n  function brShort(noteOrPc, preferFlat=false){ return brName(noteOrPc, preferFlat).replace(' sustenido','♯').replace(' bemol','♭'); }\n  \n  function parseNote(s){ const m = String(s||'').trim().match(/^([A-Ga-g])([#b]?)/); if(!m) return null; const n = m[1].toUpperCase()+m[2]; return NOTE_VAL.hasOwnProperty(n)?{name:n, pc:NOTE_VAL[n], len:m[0].length, preferFlat:n.includes('b')}:null; }\n  \n  function slashBassIndex(text){\n    let depth=0;\n    for(let i=0;i<text.length;i++){\n      const ch=text[i];\n      if(ch==='(') depth++;\n      else if(ch===')') depth=Math.max(0,depth-1);\n      else if(ch==='/' && depth===0){\n        const tail=text.slice(i+1);\n        if(/^([A-Ga-g])([#b]?)(?![A-Za-z#b])/.test(tail)) return i;\n      }\n    }\n    return -1;\n  }\n  \n  function normalizeQuality(raw){\n    let q = String(raw||'').trim();\n    q = q.replace(/\\s+/g,'');\n    q = q.replace(/[−–]/g,'-').replace(/△/g,'Δ');\n    q = q.replace(/5-\\/7/gi,'7(b5)');\n    q = q.replace(/m5-\\/7/gi,'m7(b5)');\n    q = q.replace(/mi7\\(b5\\)/gi,'m7(b5)');\n    q = q.replace(/ø7?/g,'m7(b5)');\n    q = q.replace(/°/g,'º');\n    q = q.replace(/maj/gi,'maj');\n    q = q.replace(/min/gi,'m');\n    q = q.replace(/7M/g,'7M');\n    q = q.replace(/M7/g,'7M');\n    q = q.replace(/Δ/g,'7M');\n    q = q.replace(/7\\+\\/9/g,'7+/9').replace(/7\\+\\(9\\)/g,'7+(9)');\n    q = q.replace(/7\\+\\/13/g,'7+/13').replace(/7\\+\\(13\\)/g,'7+(13)');\n    q = q.replace(/\\((?:add)?9\\)/i,'add9');\n    q = q.replace(/\\((?:maj7|7M)\\)/i,'(7M)');\n    q = q.replace(/\\(([^)]*)\\)/g, (_,inside)=>'('+inside.replace(/\\s+/g,'')+')');\n    return q;\n  }\n  \n  function typeFromQuality(qRaw){\n    const q = normalizeQuality(qRaw);\n    if(q==='' || q==='M') return TYPE_BY_ID.maj;\n    const candidates = [];\n    for(const t of TYPES){\n      for(const a of t.aliases){\n        if(q.toLowerCase() === String(a).toLowerCase()) candidates.push(t);\n      }\n      if(q.toLowerCase() === t.q.toLowerCase()) candidates.push(t);\n    }\n    if(candidates.length) return candidates[0];\n    const simple = q.toLowerCase();\n    const contains = (x)=>simple.includes(x.toLowerCase());\n    const hasM = /^m(?!aj)/i.test(q) || /^-/i.test(q);\n    if(contains('m7(b5)') || contains('m7-5') || contains('m5-/7')) return TYPE_BY_ID.m7b5;\n    if(contains('º7') || contains('dim7')) return TYPE_BY_ID.dim7;\n    if(contains('dim')) return TYPE_BY_ID.dim;\n    if(hasM && (contains('7m') || contains('maj7') || contains('(7M)'))) return TYPE_BY_ID.mmaj7;\n    if(hasM && contains('13')) return TYPE_BY_ID.m13;\n    if(hasM && contains('6/9')) return TYPE_BY_ID.m69;\n    if(hasM && contains('add11') || hasM && contains('add4')) return TYPE_BY_ID.madd11;\n    if(hasM && contains('add9')) return TYPE_BY_ID.madd9;\n    if(hasM && contains('11')) return TYPE_BY_ID.m11;\n    if(hasM && contains('9')) return TYPE_BY_ID.m9;\n    if(hasM && contains('7')) return TYPE_BY_ID.m7;\n    if(hasM && contains('6')) return TYPE_BY_ID.m6;\n    if(hasM) return TYPE_BY_ID.m;\n    if(contains('7m(9,#11,13)') || contains('maj13(#11)') || contains('7M(9,#11,13)'.toLowerCase())) return TYPE_BY_ID.maj13sharp11;\n    if(contains('maj13') || contains('7m(9,13)') || contains('7M(9,13)'.toLowerCase())) return TYPE_BY_ID.maj13;\n    if(contains('7m(9,#11)') || contains('maj9(#11)') || contains('7M(9,#11)'.toLowerCase())) return TYPE_BY_ID.maj9sharp11;\n    if(contains('7m(#11)') || contains('maj7(#11)') || contains('7M(#11)'.toLowerCase())) return TYPE_BY_ID.maj7sharp11;\n    if(contains('maj9') || contains('7m(9)') || contains('7M(9)'.toLowerCase()) || contains('7+/9')) return TYPE_BY_ID.maj9;\n    if(contains('maj7(b5)') || contains('7m(b5)') || contains('7M(b5)'.toLowerCase())) return TYPE_BY_ID.maj7b5;\n    if(contains('maj7') || contains('7m') || contains('7M'.toLowerCase())) return TYPE_BY_ID.maj7;\n    if(contains('7alt')) return TYPE_BY_ID['7alt'];\n    if(contains('7(#5,#9)') || contains('7(#9,#5)')) return TYPE_BY_ID['7sharp5sharp9'];\n    if(contains('7(b5,#9)') || contains('7(#9,b5)')) return TYPE_BY_ID['7b5sharp9'];\n    if(contains('7(#9,#11)')) return TYPE_BY_ID['7sharp9sharp11'];\n    if(contains('7(#9,b13)')) return TYPE_BY_ID['7sharp9b13'];\n    if(contains('7(b9,13)') || contains('7(13,b9)')) return TYPE_BY_ID['7b9add13'];\n    if(contains('7(#9,13)') || contains('7(13,#9)')) return TYPE_BY_ID['7sharp9add13'];\n    if(contains('7(b9,b13)') || contains('7(b9)(b13)')) return TYPE_BY_ID['7b9b13'];\n    if(contains('7(b9,#11)') || contains('7(b5,b9)')) return TYPE_BY_ID['7b5b9'];\n    if(contains('7(#5,b9)') || contains('+7(b9)')) return TYPE_BY_ID['7b9sharp5'];\n    if(contains('7(#11)') || contains('7(#4)')) return TYPE_BY_ID['7sharp11'];\n    if(contains('7(b13)')) return TYPE_BY_ID['7b13'];\n    if(contains('7(#9)')) return TYPE_BY_ID['7sharp9'];\n    if(contains('7(b9)')) return TYPE_BY_ID['7b9'];\n    if(contains('7(#5)') || contains('7+5') || contains('+7')) return TYPE_BY_ID['7sharp5'];\n    if(contains('7(b5)') || contains('7-5')) return TYPE_BY_ID['7b5'];\n    if(contains('13')) return TYPE_BY_ID['13'];\n    if(contains('11')) return TYPE_BY_ID['11'];\n    if(contains('9')) return TYPE_BY_ID['9'];\n    if(contains('7sus4') || contains('7/4') || contains('7(4)')) return TYPE_BY_ID['7sus4'];\n    if(contains('7')) return TYPE_BY_ID['7'];\n    if(contains('6/9')) return TYPE_BY_ID['69'];\n    if(contains('6')) return TYPE_BY_ID['6'];\n    if(contains('sus2')) return TYPE_BY_ID.sus2;\n    if(contains('sus4') || q==='4') return TYPE_BY_ID.sus4;\n    if(contains('add9')) return TYPE_BY_ID.add9;\n    if(q==='5') return TYPE_BY_ID['5'];\n    if(q==='+' || contains('aug') || contains('#5') || contains('5+')) return TYPE_BY_ID.aug;\n    return null;\n  }\n  \n  function parseChord(input){\n    const s = String(input||'').trim();\n    if(!s) return {error:'Digite um acorde.'};\n    const root = parseNote(s);\n    if(!root) return {error:'Nota base inválida. Use C, D, E, F, G, A ou B, com # ou b quando necessário.'};\n    let rest = s.slice(root.len);\n    let bass = null;\n    const slash = slashBassIndex(rest);\n    if(slash >= 0){\n      const bassText = rest.slice(slash+1);\n      bass = parseNote(bassText);\n      if(!bass) return {error:'Baixo inválido após a barra. Use algo como C/E, G/B ou Bb/C.'};\n      rest = rest.slice(0, slash);\n    }\n    const type = typeFromQuality(rest);\n    if(!type) return {error:'Não foi possível interpretar esta variação. Tente uma escrita como m7(b5), 7M, 7(b9), 6/9, sus4 ou add9.'};\n    return {root:root.name, rootPc:root.pc, type, bass: bass?bass.name:'', bassPc: bass?bass.pc:null, preferFlat: root.preferFlat || (bass && bass.preferFlat), input:s};\n  }\n  \n  function chordSymbol(chord, alias){\n    const q = alias !== undefined ? alias : chord.type.q;\n    const base = chord.root + q;\n    return chord.bass ? base + '/' + chord.bass : base;\n  }\n  \n  function chordPcs(chord){ return sortPcs(chord.type.intervals.map(i=>chord.rootPc+i)); }\n  \n  function chordDescription(chord){\n    const rootBr = brName(chord.root, chord.preferFlat);\n    const bassBr = chord.bass ? ' com baixo em ' + brName(chord.bass, chord.preferFlat) : '';\n    return rootBr + ' ' + chord.type.desc + bassBr;\n  }\n  \n  function intervalNotes(chord){\n    return chord.type.intervals.map(i=>({interval:mod(i), label:INTERVAL_LABEL[mod(i)], note:pcName(chord.rootPc+i, chord.preferFlat), br:brName(chord.rootPc+i, chord.preferFlat)}));\n  }\n  \n  function possibleFretsForString(stringIndex, allowedPcs, maxFret=12){\n    const arr=[-1];\n    for(let f=0; f<=maxFret; f++) if(allowedPcs.includes(mod(STANDARD_TUNING[stringIndex]+f))) arr.push(f);\n    return arr;\n  }\n  \n  function fretPitch(stringIndex, fret){ return mod(STANDARD_TUNING[stringIndex]+fret); }\n  \n  function comboProduct(lists, cb, prefix=[]){\n    if(prefix.length===lists.length){ cb(prefix); return; }\n    const list = lists[prefix.length];\n    for(const v of list){ comboProduct(lists, cb, prefix.concat(v)); }\n  }\n  \n  function generateVoicings(chord, limit=18){\n    let allowed = chordPcs(chord);\n    \n    if (chord.bassPc !== null && !allowed.includes(chord.bassPc)) {\n      allowed = sortPcs([...allowed, chord.bassPc]);\n    }\n    \n    const required = allowed;\n    const lists = STANDARD_TUNING.map((_,i)=>possibleFretsForString(i, allowed, 12));\n    const candidates=[];\n    \n    comboProduct(lists, (frets)=>{\n      const sounding = frets.filter(f=>f>=0);\n      if(sounding.length < Math.min(3, required.length)) return;\n      \n      const pcs = sortPcs(frets.map((f,i)=> f>=0 ? fretPitch(i,f) : null).filter(v=>v!==null));\n      \n      for(const r of required){\n        if(!pcs.includes(r)){\n          if(!(r===mod(chord.rootPc+7) && pcs.length>=3)) return; \n        }\n      }\n      \n      const usedNonOpen = frets.filter(f=>f>0);\n      const minF = usedNonOpen.length ? Math.min(...usedNonOpen) : 0;\n      const maxF = usedNonOpen.length ? Math.max(...usedNonOpen) : 0;\n      const span = maxF - minF;\n      \n      if(span > 4) return;\n      \n      const firstString = frets.findIndex(f=>f>=0);\n      if(firstString < 0) return;\n      \n      const bassPc = fretPitch(firstString, frets[firstString]);\n      if(chord.bassPc !== null && bassPc !== chord.bassPc) return;\n      \n      let score = 0;\n      score += sounding.length * 1.5;\n      score -= span * 2;\n      score -= minF * .55;\n      score += frets.filter(f=>f===0).length * .65;\n      if(bassPc === (chord.bassPc ?? chord.rootPc)) score += 8;\n      if(frets[5]>=0) score += .5;\n      if(maxF<=4) score += 3;\n      \n      const densePenalty = Math.max(0, sounding.length-5) * .4;\n      score -= densePenalty;\n      \n      candidates.push({frets:[...frets], pcs, minF, maxF, span, score});\n    });\n    \n    const seen=new Set();\n    return candidates.sort((a,b)=>b.score-a.score).filter(v=>{\n      const key=v.frets.join(','); if(seen.has(key)) return false; seen.add(key); return true;\n    }).slice(0,limit);\n  }\n  \n  function diagramHTML(voicing, chord, idx){\n    const frets = voicing.frets;\n    const nonOpen = frets.filter(f=>f>0);\n    let start = 1;\n    if(nonOpen.length){ const min = Math.min(...nonOpen), max = Math.max(...nonOpen); start = max<=5 ? 1 : min; }\n    const labels = frets.map(f=> f<0?'X':(f===0?'O':''));\n    const dots=[];\n    frets.forEach((f,stringIndex)=>{\n      if(f>0){\n        const row = f - start + 1;\n        if(row>=1 && row<=5){\n          const x = stringIndex*20;\n          const y = (row-.5)*20;\n          const note = brShort(fretPitch(stringIndex,f), chord.preferFlat);\n          dots.push(`<span class=\"dot\" style=\"left:${x}%;top:${y}%\" title=\"${STRING_NAMES[stringIndex]} casa ${f}: ${brName(fretPitch(stringIndex,f), chord.preferFlat)}\">${note}<\/span>`);\n        }\n      }\n    });\n    return `<article class=\"voicing\">\n      <div class=\"voicing-top\"><span class=\"voicing-name\">Posição ${idx+1}<\/span><span class=\"voicing-meta\">${voicing.minF ? voicing.minF+'ª casa' : 'aberta'}<\/span><\/div>\n      <div class=\"diagram\" aria-label=\"Diagrama ${chordSymbol(chord)}\">\n        <div class=\"top-labels\">${labels.map(x=>`<span>${x}<\/span>`).join('')}<\/div>\n        ${start>1?`<div class=\"fret-num\">${start}fr<\/div>`:''}\n        <div class=\"neck\">\n          <span class=\"string s0\"><\/span><span class=\"string s1\"><\/span><span class=\"string s2\"><\/span><span class=\"string s3\"><\/span><span class=\"string s4\"><\/span><span class=\"string s5\"><\/span>\n          <span class=\"fret f1\"><\/span><span class=\"fret f2\"><\/span><span class=\"fret f3\"><\/span><span class=\"fret f4\"><\/span><span class=\"fret f5\"><\/span>\n          ${dots.join('')}\n        <\/div>\n      <\/div>\n      <div class=\"shape\">${frets.map(f=>f<0?'X':f).join(' · ')}<\/div>\n    <\/article>`;\n  }\n  \n  function renderChord(chord){\n    $('workspace').hidden = false;\n    const symbol = chordSymbol(chord);\n    $('summary').innerHTML = `<div class=\"result-head\"><div><h3 class=\"result-title\">${symbol}<\/h3><p class=\"subtitle\">${chordDescription(chord)}<\/p><\/div><\/div>\n      <div class=\"notes\">${intervalNotes(chord).map(n=>`<span class=\"note\" title=\"${n.label}\">${n.br}<\/span>`).join('')}<\/div>\n      <div class=\"aliases\">Categoria: ${CATEGORY_LABELS[chord.type.cat] || 'Geral'}. Escritas equivalentes desta família: ${[...new Set(chord.type.aliases.filter(a=>a!=='' ).map(a=>chord.root+a+(chord.bass?'/'+chord.bass:'')))].join(', ') || chord.root}<\/div>`;\n    const voicings = generateVoicings(chord, 18);\n    const heading = `<div class=\"result-head\"><div><h2 class=\"result-title\">${symbol}<\/h2><p class=\"subtitle\">${chordDescription(chord)}. Notas: ${intervalNotes(chord).map(n=>n.br).join(', ')}.<\/p><\/div><\/div>`;\n    if(!voicings.length){\n      $('results').innerHTML = heading + `<div class=\"status\">Não encontrei posição prática dentro das doze primeiras casas com os filtros atuais. Tente retirar o baixo invertido ou usar uma variação mais simples.<\/div>`;\n    }else{\n      $('results').innerHTML = heading + `<div class=\"voicings\">${voicings.map((v,i)=>diagramHTML(v,chord,i)).join('')}<\/div>`;\n    }\n    syncBuilderFromVoicing(voicings[0]);\n  }\n  \n  function renderEmpty(){\n    $('summary').innerHTML = '';\n    $('results').innerHTML = '';\n    $('workspace').hidden = true;\n  }\n  \n  function renderError(msg){\n    $('workspace').hidden = false;\n    $('summary').innerHTML = `<div class=\"status\">${msg}<\/div>`;\n    $('results').innerHTML = `<div class=\"status\">${msg}<\/div>`;\n  }\n  \n  function updateSelectorsFromChord(chord){\n    if(!chord || chord.error) return;\n    $('rootSelect').value = chord.root;\n    $('typeSelect').value = chord.type.id;\n    $('bassSelect').value = chord.bass || '';\n    populateAliases(chord.type.id);\n    $('aliasSelect').value = chord.type.q;\n  }\n  \n  function buildFromSelectors(){\n    const root = $('rootSelect').value;\n    const rootN = parseNote(root);\n    const type = TYPE_BY_ID[$('typeSelect').value];\n    const bass = $('bassSelect').value;\n    const bassN = bass ? parseNote(bass) : null;\n    const alias = $('aliasSelect').value;\n    const chord = {root, rootPc:rootN.pc, type, bass, bassPc:bassN?bassN.pc:null, preferFlat: root.includes('b') || bass.includes('b')};\n    $('searchInput').value = chordSymbol(chord, alias || type.q);\n    renderChord(chord);\n  }\n  \n  function populateSelects(){\n    $('rootSelect').innerHTML = ROOT_OPTIONS.map(n=>`<option value=\"${n}\">${n} — ${brName(n,n.includes('b'))}<\/option>`).join('');\n    $('typeSelect').innerHTML = CATEGORY_ORDER.map(cat=>{\n      const items = TYPES.filter(t=>t.cat===cat);\n      if(!items.length) return '';\n      return `<optgroup label=\"${CATEGORY_LABELS[cat] || cat}\">${items.map(t=>`<option value=\"${t.id}\">${t.label} — ${t.q || 'maior'}<\/option>`).join('')}<\/optgroup>`;\n    }).join('');\n    $('bassSelect').innerHTML = BASS_OPTIONS.map(n=> n?`<option value=\"${n}\">${n} — ${brName(n,n.includes('b'))}<\/option>`:`<option value=\"\">Sem baixo invertido<\/option>`).join('');\n    populateAliases('maj');\n  }\n  \n  function populateAliases(typeId){\n    const t = TYPE_BY_ID[typeId];\n    $('aliasSelect').innerHTML = t.aliases.map(a=>`<option value=\"${a}\">${a || '(sem sufixo)'}<\/option>`).join('');\n  }\n  \n  function doSearch(){\n    const chord = parseChord($('searchInput').value);\n    if(chord.error){ renderError(chord.error); return; }\n    updateSelectorsFromChord(chord);\n    renderChord(chord);\n  }\n  \n  let builderFrets = [-1,-1,-1,-1,-1,-1];\n  \n  function renderFretboard(){\n    const markerClass = (f)=> f===12 ? 'marker-double' : [3,5,7,9].includes(f) ? 'marker-single' : '';\n    let html = `\n      <div class=\"fb-top\">\n        <div class=\"fb-gap\"><\/div>\n        <div class=\"fb-head\">X<\/div>\n        <div class=\"fb-head\">0<\/div>\n        <div class=\"fb-fret-numbers\">${Array.from({length:12},(_,i)=>`<div class=\"fb-head\">${i+1}<\/div>`).join('')}<\/div>\n      <\/div>`;\n    for(let s=0;s<6;s++){\n      html += `<div class=\"fb-row\">`;\n      html += `<div class=\"fb-string-label\">${STRING_NAMES[s]}<\/div>`;\n      html += `<button class=\"fb-mini mute ${builderFrets[s]===-1?'selected':''}\" data-string=\"${s}\" data-fret=\"-1\" title=\"${STRING_NAMES[s]} abafada\">X<\/button>`;\n      html += `<button class=\"fb-mini open ${builderFrets[s]===0?'selected':''}\" data-string=\"${s}\" data-fret=\"0\" title=\"${STRING_NAMES[s]} solta: ${brName(fretPitch(s,0))}\">0<\/button>`;\n      html += `<div class=\"fb-neck-row ${s===0?'fb-nut':''}\">`;\n      for(let f=1; f<=12; f++){\n        const note = brShort(fretPitch(s,f));\n        const selected = builderFrets[s]===f ? 'selected' : '';\n        const marker = markerClass(f);\n        html += `<button class=\"fb-fret-slot ${selected} ${marker}\" data-string=\"${s}\" data-fret=\"${f}\" title=\"${STRING_NAMES[s]} casa ${f}: ${brName(fretPitch(s,f))}\"><span class=\"slot-note\">${note}<\/span>${marker ? '<span class=\"marker-pearl\"><\/span>' : ''}${marker==='marker-double' ? '<span class=\"marker-pearl2\"><\/span>' : ''}<span class=\"slot-dot\">${note}<\/span><\/button>`;\n      }\n      html += `<\/div><\/div>`;\n    }\n    $('fretboard').innerHTML = html;\n    $('fretboard').querySelectorAll('[data-string][data-fret]').forEach(btn=>btn.addEventListener('click',()=>{\n      const s = Number(btn.dataset.string), f = Number(btn.dataset.fret);\n      builderFrets[s]=f; renderFretboard(); identifyBuilder();\n    }));\n  }\n  \n  function syncBuilderFromVoicing(v){\n    if(!v) return;\n    builderFrets = [...v.frets];\n    renderFretboard(); identifyBuilder(false);\n  }\n  \n  function builderPcs(){\n    return sortPcs(builderFrets.map((f,i)=> f>=0?fretPitch(i,f):null).filter(v=>v!==null));\n  }\n  \n  function identifyBuilder(showEmpty=true){\n    const sounding = builderFrets.map((f,i)=>({f,string:i,pc:f>=0?fretPitch(i,f):null})).filter(x=>x.f>=0);\n    if(!sounding.length){\n      $('builderStatus').innerHTML = showEmpty?`<div class=\"status\">Nenhuma corda selecionada. Clique no braço para montar um acorde.<\/div>`:'';\n      $('identified').innerHTML=''; return;\n    }\n    const pcs = sortPcs(sounding.map(x=>x.pc));\n    const notes = pcs.map(pc=>brName(pc)).join(', ');\n    $('builderStatus').innerHTML = `<div class=\"status ok\">Notas selecionadas: ${notes}. Posição: ${builderFrets.map(f=>f<0?'X':f).join(' · ')}<\/div>`;\n    const matches = identifyPcs(pcs, sounding[0].pc).slice(0,8);\n    if(!matches.length){\n      $('identified').innerHTML = `<div class=\"match\"><strong>Nenhum acorde fechado encontrado<\/strong><span>As notas podem formar fragmento, inversão incompleta ou sobreposição. Experimente incluir a fundamental, terça e sétima.<\/span><\/div>`;\n    }else{\n      $('identified').innerHTML = matches.map(m=>`<div class=\"match\"><strong>${m.symbol}<\/strong><span>${m.description}. Compatibilidade: ${Math.round(m.score)}%.<\/span><\/div>`).join('');\n    }\n  }\n  \n  function setEq(a,b){ if(a.length!==b.length) return false; const A=sortPcs(a),B=sortPcs(b); return A.every((v,i)=>v===B[i]); }\n  function isSubset(sub, full){ return sub.every(x=>full.includes(x)); }\n  \n  function identifyPcs(pcs, bassPc){\n    pcs = sortPcs(pcs);\n    const matches=[];\n    for(let rootPc=0; rootPc<12; rootPc++){\n      const rootName = pcName(rootPc, false);\n      for(const t of TYPES){\n        const formula = sortPcs(t.intervals.map(i=>rootPc+i));\n        let score = 0;\n        if(setEq(pcs, formula)) score = 100;\n        else if(isSubset(pcs, formula) && pcs.includes(rootPc) && pcs.length>=2) score = 78 + (pcs.length/formula.length)*12;\n        else if(isSubset(formula.filter(pc=>pc!==mod(rootPc+7)), pcs) && pcs.includes(rootPc)) score = 80;\n        if(score>0){\n          const bass = bassPc!==null && bassPc!==rootPc ? '/' + pcName(bassPc, false) : '';\n          const chord = {root:rootName, rootPc, type:t, bass:bass?pcName(bassPc,false):'', bassPc:bass?bassPc:null, preferFlat:false};\n          matches.push({symbol:chordSymbol(chord), description:chordDescription(chord), score});\n        }\n      }\n    }\n    const seen=new Set();\n    return matches.sort((a,b)=>b.score-a.score || a.symbol.length-b.symbol.length).filter(m=>{const k=m.symbol; if(seen.has(k)) return false; seen.add(k); return true;});\n  }\n  \n  function copyBuilder(){\n    const text = builderFrets.map(f=>f<0?'X':f).join(' ');\n    navigator.clipboard?.writeText(text);\n    $('builderStatus').innerHTML = `<div class=\"status ok\">Posição copiada: ${text}<\/div>`;\n  }\n  \n  function activateTab(name){\n    document.querySelectorAll('[data-tab-target]').forEach(btn=>{\n      const active = btn.dataset.tabTarget === name;\n      btn.classList.toggle('active', active);\n      btn.setAttribute('aria-selected', active ? 'true' : 'false');\n    });\n    document.querySelectorAll('[data-tab-pane]').forEach(pane=>{\n      const active = pane.dataset.tabPane === name;\n      pane.classList.toggle('active', active);\n      pane.hidden = !active;\n    });\n  }\n  \n  function init(){\n    populateSelects(); renderFretboard(); activateTab('search'); renderEmpty();\n    $('searchBtn').addEventListener('click',doSearch);\n    $('searchInput').addEventListener('keydown',e=>{if(e.key==='Enter') doSearch();});\n    $('buildBtn').addEventListener('click',buildFromSelectors);\n    $('rootSelect').addEventListener('change',buildFromSelectors);\n    $('typeSelect').addEventListener('change',()=>{populateAliases($('typeSelect').value);buildFromSelectors();});\n    $('bassSelect').addEventListener('change',buildFromSelectors);\n    $('aliasSelect').addEventListener('change',buildFromSelectors);\n    $('clearBassBtn').addEventListener('click',()=>{$('bassSelect').value='';buildFromSelectors();});\n    $('sendToBuilderBtn').addEventListener('click',()=>{\n      const chord = parseChord($('searchInput').value);\n      if(chord.error){renderError(chord.error);return;}\n      const v = generateVoicings(chord,1)[0];\n      if(v){ syncBuilderFromVoicing(v); activateTab('identify'); }\n    });\n    $('identifyBtn').addEventListener('click',()=>identifyBuilder(true));\n    $('clearBuilderBtn').addEventListener('click',()=>{builderFrets=[-1,-1,-1,-1,-1,-1];renderFretboard();identifyBuilder(false);$('builderStatus').innerHTML='';});\n    $('copyBuilderBtn').addEventListener('click',copyBuilder);\n    document.querySelectorAll('[data-tab-target]').forEach(btn=>btn.addEventListener('click',()=>activateTab(btn.dataset.tabTarget)));\n  }\n  \n  window.DicionarioAcordesBR = {parseChord, generateVoicings, identifyPcs, chordDescription, chordSymbol, chordPcs, brName, brShort, TYPES};\n  init();\n})();\n<\/script>\n<\/body>\n<\/html>\n";
+    window.BANCO_CIFRAS_INTERNAL_CHORD_DICTIONARY_HTML = INTERNAL_CHORD_DICTIONARY_HTML;
 
     if (!SONGS.some(song => song.id === "colecao-cassiano")) {
       SONGS.push({
@@ -2543,11 +2567,8 @@
       SONG_TONE_OVERRIDES_KEY,
       COMBINATIONS_KEY
     ];
-    const CIFRA_CLUB_DICTIONARY_URL = "https://www.cifraclub.com.br/dicionario.acordes";
-
     function openCifraClubDictionary() {
-      const opened = window.open(CIFRA_CLUB_DICTIONARY_URL, "_blank", "noopener,noreferrer");
-      if (!opened) window.location.href = CIFRA_CLUB_DICTIONARY_URL;
+      showView("chordDictionary");
     }
 
     function syncSongsDataJson() {
@@ -2816,6 +2837,7 @@
     const exportChordVectorsButton = document.getElementById("exportChordVectorsButton");
     const chordVectorStatus = document.getElementById("chordVectorStatus");
     const chordDictionaryCounter = document.getElementById("chordDictionaryCounter");
+    const internalChordDictionaryFrame = document.getElementById("internalChordDictionaryFrame");
     const chordDictionaryTableWrap = document.getElementById("chordDictionaryTableWrap");
     const chordDictionaryTableHead = document.getElementById("chordDictionaryTableHead");
     const chordDictionaryTableBody = document.getElementById("chordDictionaryTableBody");
@@ -2941,6 +2963,15 @@
 
 
 
+    function loadInternalChordDictionaryFrame() {
+      if (!internalChordDictionaryFrame) return;
+      if (internalChordDictionaryFrame.dataset.loaded === "true") return;
+      internalChordDictionaryFrame.srcdoc = INTERNAL_CHORD_DICTIONARY_HTML;
+      internalChordDictionaryFrame.dataset.loaded = "true";
+      if (chordDictionaryCounter) chordDictionaryCounter.textContent = "Dicionário interno";
+      if (chordVectorStatus) chordVectorStatus.textContent = "Dicionário de Acordes integrado e pronto para consulta local.";
+    }
+
     function chordDictionaryTypes() {
       const types = new Map();
       CHORD_DICTIONARY.forEach(item => {
@@ -2979,7 +3010,7 @@
       }).join("");
 
       if (chordDictionaryCounter) {
-        chordDictionaryCounter.textContent = "Consulta externa no Cifra Club";
+        chordDictionaryCounter.textContent = "Dicionário interno";
       }
     }
 
@@ -3477,7 +3508,7 @@
       }
 
       if (viewName === "chordDictionary") {
-        renderChordDictionary();
+        loadInternalChordDictionaryFrame();
         chordDictionaryView.classList.add("active");
       }
 
@@ -4280,11 +4311,18 @@
       return token;
     }
 
+    function normalizeDiminishedChordToken(token) {
+      return String(token || "")
+        .replace(/^([A-G](?:#|b)?)[oO](?=$|\/)/, "$1º")
+        .replace(/\/([a-g])(#|b)?/g, (_, note, accidental = "") => "/" + note.toUpperCase() + accidental)
+        .replace(/([0-9])[,\.](?=[0-9])/g, "$1/");
+    }
+
     function simpleChordToken(rawToken) {
-      const token = cleanChordToken(rawToken);
+      const token = normalizeDiminishedChordToken(cleanChordToken(rawToken));
       if (!token) return false;
 
-      const chordPattern = /^[A-G](?:#|b)?(?:(?:maj|min|dim|aug|sus|add|alt|m|M)|[0-9]+|[#b+\-º°()]|\/(?:[A-G](?:#|b)?|[0-9]+)?)*$/;
+      const chordPattern = /^[A-G](?:#|b)?(?:(?:maj|min|dim|aug|sus|add|alt|m|M)|[0-9]+|[#b+\-º°().,]|\/(?:[A-G](?:#|b)?|[0-9]+)?)*$/;
       return chordPattern.test(token) && /^(?![A-G](?:#|b)?\/$)/.test(token);
     }
 
@@ -4304,35 +4342,52 @@
       return chordCount > 0 && (ratio >= 0.55 || chordCount >= 3 || (tokens.length <= 4 && chordCount >= 2));
     }
 
+    function normalizeChordLabelForDictionary(label) {
+      const token = normalizeDiminishedChordToken(cleanChordToken(label));
+      return token || "";
+    }
+
+    function hasChordSpacingSignal(parts, index) {
+      const prev = index > 0 ? parts[index - 1] : "";
+      const next = index < parts.length - 1 ? parts[index + 1] : "";
+      return /^\s{2,}$/.test(prev) || /^\s{2,}$/.test(next);
+    }
+
+    function hasExplicitChordSyntax(rawToken, normalizedToken) {
+      const raw = cleanChordToken(rawToken);
+      if (/^(?:A|E|Em|Ao|Do|do|ao|em|Com|com)$/.test(raw)) return false;
+      return /(?:#|b|[0-9]|maj|min|dim|aug|sus|add|alt|m|M|º|°|\+|-|\/|\(|\)|[,\.])/.test(normalizedToken);
+    }
+
+    function renderLooseChordMarkup(line) {
+      const parts = String(line || "").split(/(\s+)/);
+      return parts.map((part, index) => {
+        if (!part) return "";
+        if (/^\s+$/.test(part)) return escapeHTML(part);
+        const label = normalizeChordLabelForDictionary(part);
+        if (label && simpleChordToken(label) && hasChordSpacingSignal(parts, index) && hasExplicitChordSyntax(part, label)) {
+          return renderChordTokenButton(part, "inline-chord loose-chord");
+        }
+        return escapeHTML(part);
+      }).join("");
+    }
+
     function renderChordTokenButton(label, className = "") {
-      const chordLabel = String(label || "").trim();
-      if (!chordLabel) return "";
+      const displayLabel = String(label || "").trim();
+      const chordLabel = normalizeChordLabelForDictionary(displayLabel);
+      if (!displayLabel || !chordLabel) return "";
       const classes = ["chord-token", className].filter(Boolean).join(" ");
-      return `<button type="button" class="${classes}" data-chord-label="${escapeHTML(chordLabel)}">${escapeHTML(chordLabel)}</button>`;
+      return `<button type="button" class="${classes}" data-chord-label="${escapeHTML(chordLabel)}">${escapeHTML(displayLabel)}</button>`;
     }
 
     function renderChordMarkup(line) {
-      const source = String(line || "");
-      const tokenPattern = /\[([^\]]+)\]|([A-G](?:#|b)?(?:(?:maj|min|dim|aug|sus|add|alt|m|M)|[0-9]+|[#b+\-º°()/])*)/g;
-      let html = "";
-      let cursor = 0;
-      let match;
-
-      while ((match = tokenPattern.exec(source)) !== null) {
-        html += escapeHTML(source.slice(cursor, match.index));
-
-        const token = match[1] || match[2];
-        if (token) {
-          html += renderChordTokenButton(token, match[1] ? "inline-chord" : "sheet-chord");
-        } else {
-          html += escapeHTML(match[0]);
-        }
-
-        cursor = match.index + match[0].length;
-      }
-
-      html += escapeHTML(source.slice(cursor));
-      return html;
+      return String(line || "").split(/(\s+)/).map((part) => {
+        if (!part) return "";
+        if (/^\s+$/.test(part)) return escapeHTML(part);
+        const label = normalizeChordLabelForDictionary(part);
+        if (label && simpleChordToken(label)) return renderChordTokenButton(part, "sheet-chord");
+        return escapeHTML(part);
+      }).join("");
     }
 
     function renderStaticChordLine(line) {
@@ -4348,7 +4403,7 @@
         return `<span class="line chord-line">${renderChordMarkup(line)}</span>`;
       }
 
-      return `<span class="line lyric-line">${escapeHTML(line)}</span>`;
+      return `<span class="line lyric-line">${renderLooseChordMarkup(line)}</span>`;
     }
 
     function renderStaticChordBlock(text) {
@@ -4377,6 +4432,13 @@
       });
 
       const safePlaylistSongs = JSON.stringify(playlistSongs)
+        .replace(/</g, "\\u003c")
+        .replace(/>/g, "\\u003e")
+        .replace(/&/g, "\\u0026")
+        .replace(/\u2028/g, "\\u2028")
+        .replace(/\u2029/g, "\\u2029");
+
+      const safeDictionaryHtml = JSON.stringify(INTERNAL_CHORD_DICTIONARY_HTML)
         .replace(/</g, "\\u003c")
         .replace(/>/g, "\\u003e")
         .replace(/&/g, "\\u0026")
@@ -4412,7 +4474,7 @@
   <title>${escapeHTML(playlist.name)} | Playlist</title>
   <style>
     :root { --bg:#f7f5f1; --surface:#fff; --surface-soft:#fbfaf8; --text:#000; --muted:#716b63; --line:#e6dfd6; --accent:#7a5330; --chord:#c1121f; --shadow:0 18px 48px rgba(31,31,31,.07); --radius:22px; --max:1180px; }
-    html[data-theme="dark"] { --bg:#11100f; --surface:#1a1816; --surface-soft:#23201d; --text:#fff; --muted:#b6aca0; --line:#35302b; --accent:#d1a06f; --chord:#ffd84d; --shadow:0 18px 48px rgba(0,0,0,.34); }
+    html[data-theme="dark"] { --bg:#11100f; --surface:#1a1816; --surface-soft:#23201d; --text:#fff; --muted:#b6aca0; --line:#35302b; --accent:#d1a06f; --chord:#ffd23f; --shadow:0 18px 48px rgba(0,0,0,.34); }
     * { box-sizing:border-box; }
     html { color-scheme:light; overflow-x:hidden; }
     html[data-theme="dark"] { color-scheme:dark; }
@@ -4449,14 +4511,15 @@
     .line.lyric-line { color:var(--text); font-weight:500; }
     .chord-token { appearance:none; border:0; background:none; color:inherit; font:inherit; cursor:pointer; padding:0; margin:0; }
     .chord-token:hover, .chord-token:focus-visible { text-decoration:underline; }
+    .sheet .chord-token, .chord-sheet .chord-token { color:var(--chord) !important; font-weight:800; }
     .inline-chord { display:inline-block; transform:translateY(-.15em); margin-right:.16em; }
     .chord-modal { position:fixed; inset:0; z-index:40; display:grid; place-items:center; padding:16px; background:rgba(17,16,15,.66); backdrop-filter:blur(10px); }
     .chord-modal[hidden] { display:none !important; }
-    .chord-modal-card { width:min(360px,calc(100vw - 32px)); max-height:calc(100vh - 32px); overflow:auto; border-radius:20px; border:1px solid var(--line); background:var(--surface); color:var(--text); box-shadow:var(--shadow); padding:16px; }
+    .chord-modal-card { width:min(980px,calc(100vw - 32px)); max-height:calc(100vh - 32px); overflow:auto; border-radius:20px; border:1px solid var(--line); background:var(--surface); color:var(--text); box-shadow:var(--shadow); padding:16px; }
     .chord-modal-card header { display:flex; justify-content:space-between; align-items:flex-start; gap:12px; }
     .chord-modal-card h3 { margin:0; font-size:1.18rem; letter-spacing:-.03em; }
     .chord-modal-card p { margin:6px 0 0; color:var(--muted); }
-    .chord-modal-card img { width:auto; max-width:min(260px,100%); max-height:min(58vh,420px); height:auto; display:block; margin:12px auto 0; object-fit:contain; border-radius:12px; background:#fff; }
+    .chord-modal-frame { width:100%; height:min(70vh,660px); min-height:520px; display:block; margin:12px auto 0; border:1px solid var(--line); border-radius:16px; background:#fff; }
     .chord-modal-card button { min-height:34px; padding:0 12px; border-radius:999px; background:var(--surface-soft); color:var(--text); border:1px solid var(--line); }
     @media (max-width:700px) { .top { flex-direction:column; } .close { width:100%; } .tool { grid-template-columns:1fr; } .tool.scroll-tool { width:calc(100% - 22px); bottom:8px; } .actions button, .transpose-actions button { flex:1; } .song-head { padding:13px; } .transpose-row { align-items:stretch; } .transpose-actions { width:100%; } }
   </style>
@@ -4486,7 +4549,7 @@
         </div>
         <button type="button" id="chordModalClose">Fechar</button>
       </header>
-      <img id="chordModalImage" alt="">
+      <iframe id="chordModalFrame" class="chord-modal-frame" title="Dicionário de acordes integrado"></iframe>
     </div>
   </div>
   <script>
@@ -4502,7 +4565,8 @@
     const chordModal = document.getElementById('chordModal');
     const chordModalTitle = document.getElementById('chordModalTitle');
     const chordModalLabel = document.getElementById('chordModalLabel');
-    const chordModalImage = document.getElementById('chordModalImage');
+    const chordModalFrame = document.getElementById('chordModalFrame');
+    const INTERNAL_CHORD_DICTIONARY_HTML = ${safeDictionaryHtml};
     const chordModalClose = document.getElementById('chordModalClose');
     let chordVectorRecordsCache = null;
 
@@ -4537,10 +4601,17 @@
       return token;
     }
 
+    function normalizeDiminishedChordToken(token) {
+      return String(token || '')
+        .replace(/^([A-G](?:#|b)?)[oO](?=$|\/)/, '$1º')
+        .replace(/\/([a-g])(#|b)?/g, function(match, note, accidental) { return '/' + String(note).toUpperCase() + (accidental || ''); })
+        .replace(/([0-9])[,\.](?=[0-9])/g, '$1/');
+    }
+
     function isChordToken(rawToken) {
-      const token = cleanChordToken(rawToken);
+      const token = normalizeDiminishedChordToken(cleanChordToken(rawToken));
       if (!token) return false;
-      const chordPattern = /^[A-G](?:#|b)?(?:(?:maj|min|dim|aug|sus|add|alt|m|M)|[0-9]+|[#b+\-º°()]|\/(?:[A-G](?:#|b)?|[0-9]+)?)*$/;
+      const chordPattern = /^[A-G](?:#|b)?(?:(?:maj|min|dim|aug|sus|add|alt|m|M)|[0-9]+|[#b+\-º°().,]|\/(?:[A-G](?:#|b)?|[0-9]+)?)*$/;
       return chordPattern.test(token) && /^(?![A-G](?:#|b)?\/$)/.test(token);
     }
 
@@ -4575,6 +4646,34 @@
       });
     }
 
+    function normalizeChordLabelForDictionary(label) {
+      return normalizeDiminishedChordToken(cleanChordToken(label)) || '';
+    }
+
+    function hasChordSpacingSignal(parts, index) {
+      var prev = index > 0 ? parts[index - 1] : '';
+      var next = index < parts.length - 1 ? parts[index + 1] : '';
+      return /^\s{2,}$/.test(prev) || /^\s{2,}$/.test(next);
+    }
+
+    function hasExplicitChordSyntax(rawToken, normalizedToken) {
+      var raw = cleanChordToken(rawToken);
+      if (/^(?:A|E|Em|Ao|Do|do|ao|em|Com|com)$/.test(raw)) return false;
+      return /(?:#|b|[0-9]|maj|min|dim|aug|sus|add|alt|m|M|º|°|\+|-|\/|\(|\)|[,\.])/.test(normalizedToken);
+    }
+
+    function renderLooseChordMarkup(line) {
+      return String(line || '').split(/(\s+)/).map(function(part, index, parts) {
+        if (!part) return '';
+        if (/^\s+$/.test(part)) return escapeHTML(part);
+        var label = normalizeChordLabelForDictionary(part);
+        if (label && isChordToken(label) && hasChordSpacingSignal(parts, index) && hasExplicitChordSyntax(part, label)) {
+          return '<button type="button" class="chord-token inline-chord loose-chord" data-chord-label="' + escapeHTML(label) + '">' + escapeHTML(part) + '</button>';
+        }
+        return escapeHTML(part);
+      }).join('');
+    }
+
     function transposeChordSheet(chordSheetText, semitones, preferFlats) {
       if (!semitones) return chordSheetText || '';
       return String(chordSheetText || '').split('\n').map(function(line) {
@@ -4587,9 +4686,9 @@
       return String(line || '').split(/(\s+)/).map(function(part) {
         if (!part) return '';
         if (/^\s+$/.test(part)) return escapeHTML(part);
-        const label = cleanChordToken(part);
-        if (isChordToken(part) && label) {
-          return '<button type="button" class="chord-token" data-chord-label="' + escapeHTML(label) + '">' + escapeHTML(part) + '</button>';
+        const label = normalizeChordLabelForDictionary(part);
+        if (label && isChordToken(label)) {
+          return '<button type="button" class="chord-token sheet-chord" data-chord-label="' + escapeHTML(label) + '">' + escapeHTML(part) + '</button>';
         }
         return escapeHTML(part);
       }).join('');
@@ -4597,8 +4696,9 @@
 
     function renderChordProLine(line) {
       return escapeHTML(String(line || '')).replace(/\[([A-G](?:#|b)?[^\]]*)\]/g, function(match, chord) {
-        const label = String(chord || '').trim();
-        return '<button type="button" class="chord-token inline-chord" data-chord-label="' + escapeHTML(label) + '">' + escapeHTML(label) + '</button>';
+        const label = normalizeChordLabelForDictionary(chord);
+        const displayLabel = String(chord || '').trim();
+        return '<button type="button" class="chord-token inline-chord" data-chord-label="' + escapeHTML(label) + '">' + escapeHTML(displayLabel) + '</button>';
       });
     }
 
@@ -4611,7 +4711,7 @@
       if (lineLooksLikeChordLine(source)) {
         return '<span class="line chord-line">' + renderChordMarkup(source) + '</span>';
       }
-      return '<span class="line lyric-line">' + escapeHTML(source) + '</span>';
+      return '<span class="line lyric-line">' + renderLooseChordMarkup(source) + '</span>';
     }
 
     function renderChordBlock(text) {
@@ -4746,7 +4846,7 @@
 
     function showChordDictionaryNotice(value) {
       const notice = createDictionaryNotice();
-      notice.textContent = 'Acorde ' + value + ' copiado. Cole no campo “Buscar acorde” do Cifra Club.';
+      notice.textContent = 'Abrindo o acorde ' + value + ' no Dicionário de Acordes integrado.';
       notice.hidden = false;
       window.clearTimeout(window.__chordDictionaryNoticeTimer);
       window.__chordDictionaryNoticeTimer = window.setTimeout(function() { notice.hidden = true; }, 5200);
@@ -4773,18 +4873,32 @@
       else fallbackCopyChordToClipboard(text);
     }
 
+    function buildInternalDictionarySrcdocForChord(chord) {
+      const label = String(chord || '').trim();
+      if (!label) return INTERNAL_CHORD_DICTIONARY_HTML;
+      const autoSearchScript = '<script>window.addEventListener("load",function(){try{var label=' + JSON.stringify(label) + ';var input=document.getElementById("searchInput");if(input){input.value=label;}var button=document.getElementById("searchBtn");if(button){button.click();}var workspace=document.getElementById("workspace");if(workspace){setTimeout(function(){workspace.scrollIntoView({block:"start"});},0);}}catch(error){}});<' + '/script>';
+      return INTERNAL_CHORD_DICTIONARY_HTML.replace(/<\/body>/i, autoSearchScript + '</body>');
+    }
+
     function openChordModalFromLabel(label) {
       const chord = String(label || '').trim();
-      if (!chord) return false;
-      copyChordToClipboard(chord);
+      if (!chord || !chordModal || !chordModalFrame) return false;
+      if (chordModalTitle) chordModalTitle.textContent = chord;
+      if (chordModalLabel) chordModalLabel.textContent = 'Posições do acorde no Dicionário de Acordes integrado.';
+      chordModalFrame.srcdoc = buildInternalDictionarySrcdocForChord(chord);
+      chordModal.hidden = false;
+      chordModal.removeAttribute('hidden');
       showChordDictionaryNotice(chord);
-      const url = 'https://www.cifraclub.com.br/dicionario.acordes';
-      const opened = window.open(url, '_blank', 'noopener,noreferrer');
-      if (!opened) window.location.href = url;
+      if (chordModalClose) chordModalClose.focus();
       return true;
     }
 
-    function closeChordModal() { if (!chordModal) return; chordModal.hidden = true; chordModal.setAttribute('hidden', ''); }
+    function closeChordModal() {
+      if (!chordModal) return;
+      chordModal.hidden = true;
+      chordModal.setAttribute('hidden', '');
+      if (chordModalFrame) chordModalFrame.removeAttribute('srcdoc');
+    }
     chordModalClose.addEventListener('click', closeChordModal);
     chordModal.addEventListener('click', function(event) { if (event.target === chordModal) closeChordModal(); });
     document.addEventListener('keydown', function(event) { if (event.key === 'Escape' && chordModal && !chordModal.hasAttribute('hidden')) closeChordModal(); });
@@ -4903,6 +5017,13 @@
         safePlaylistSnapshot = "[]";
       }
 
+      const safeDictionaryHtml = JSON.stringify(INTERNAL_CHORD_DICTIONARY_HTML)
+        .replace(/</g, "\\u003c")
+        .replace(/>/g, "\\u003e")
+        .replace(/&/g, "\\u0026")
+        .replace(/\u2028/g, "\\u2028")
+        .replace(/\u2029/g, "\\u2029");
+
       const safeTheme = theme === "dark" ? "dark" : "light";
 
       return String.raw`<!DOCTYPE html>
@@ -4934,7 +5055,7 @@
       --muted: #b6aca0;
       --line: #35302b;
       --accent: #d1a06f;
-      --chord: #ffd84d;
+      --chord: #ffd23f;
       --shadow: 0 18px 48px rgba(0, 0, 0, 0.34);
     }
 
@@ -5374,6 +5495,11 @@
       text-decoration: underline;
     }
 
+    .chord-sheet .chord-token {
+      color: var(--chord) !important;
+      font-weight: 800;
+    }
+
     .sheet-chord,
     .inline-chord {
       color: var(--chord) !important;
@@ -5402,7 +5528,7 @@
     }
 
     .chord-modal-card {
-      width: min(360px, calc(100vw - 32px));
+      width: min(980px, calc(100vw - 32px));
       max-height: calc(100vh - 32px);
       overflow: auto;
       border-radius: 20px;
@@ -5431,15 +5557,14 @@
       color: var(--muted);
     }
 
-    .chord-modal-card img {
-      width: auto;
-      max-width: min(260px, 100%);
-      max-height: min(58vh, 420px);
-      height: auto;
+    .chord-modal-frame {
+      width: 100%;
+      height: min(70vh, 660px);
+      min-height: 520px;
       display: block;
       margin: 12px auto 0;
-      object-fit: contain;
-      border-radius: 12px;
+      border: 1px solid var(--line);
+      border-radius: 16px;
       background: #fff;
     }
 
@@ -5839,7 +5964,7 @@
         </div>
         <button type="button" id="chordModalClose">Fechar</button>
       </header>
-      <img id="chordModalImage" alt="">
+      <iframe id="chordModalFrame" class="chord-modal-frame" title="Dicionário de acordes integrado"></iframe>
     </div>
   </div>
 
@@ -5892,7 +6017,8 @@
     const chordModal = document.getElementById("chordModal");
     const chordModalTitle = document.getElementById("chordModalTitle");
     const chordModalLabel = document.getElementById("chordModalLabel");
-    const chordModalImage = document.getElementById("chordModalImage");
+    const chordModalFrame = document.getElementById("chordModalFrame");
+    const INTERNAL_CHORD_DICTIONARY_HTML = ${safeDictionaryHtml};
     const chordModalClose = document.getElementById("chordModalClose");
     let chordVectorRecordsCache = null;
 
@@ -6074,7 +6200,7 @@
 
     function showChordDictionaryNotice(value) {
       const notice = createDictionaryNotice();
-      notice.textContent = 'Acorde ' + value + ' copiado. Cole no campo “Buscar acorde” do Cifra Club.';
+      notice.textContent = 'Abrindo o acorde ' + value + ' no Dicionário de Acordes integrado.';
       notice.hidden = false;
       window.clearTimeout(window.__chordDictionaryNoticeTimer);
       window.__chordDictionaryNoticeTimer = window.setTimeout(() => {
@@ -6106,14 +6232,23 @@
       }
     }
 
+    function buildInternalDictionarySrcdocForChord(chord) {
+      const label = String(chord || "").trim();
+      if (!label) return INTERNAL_CHORD_DICTIONARY_HTML;
+      const autoSearchScript = '<script>window.addEventListener("load",function(){try{var label=' + JSON.stringify(label) + ';var input=document.getElementById("searchInput");if(input){input.value=label;}var button=document.getElementById("searchBtn");if(button){button.click();}var workspace=document.getElementById("workspace");if(workspace){setTimeout(function(){workspace.scrollIntoView({block:"start"});},0);}}catch(error){}});<' + '/script>';
+      return INTERNAL_CHORD_DICTIONARY_HTML.replace(/<\/body>/i, autoSearchScript + "</body>");
+    }
+
     function openChordModalFromLabel(label) {
-      const chord = String(label || '').trim();
-      if (!chord) return false;
-      copyChordToClipboard(chord);
+      const chord = String(label || "").trim();
+      if (!chord || !chordModal || !chordModalFrame) return false;
+      if (chordModalTitle) chordModalTitle.textContent = chord;
+      if (chordModalLabel) chordModalLabel.textContent = "Posições do acorde no Dicionário de Acordes integrado.";
+      chordModalFrame.srcdoc = buildInternalDictionarySrcdocForChord(chord);
+      chordModal.hidden = false;
+      chordModal.removeAttribute("hidden");
       showChordDictionaryNotice(chord);
-      const url = 'https://www.cifraclub.com.br/dicionario.acordes';
-      const opened = window.open(url, '_blank', 'noopener,noreferrer');
-      if (!opened) window.location.href = url;
+      if (chordModalClose) chordModalClose.focus();
       return true;
     }
 
@@ -6121,6 +6256,7 @@
       if (!chordModal) return;
       chordModal.hidden = true;
       chordModal.setAttribute("hidden", "");
+      if (chordModalFrame) chordModalFrame.removeAttribute("srcdoc");
     }
 
     const transposeInfo = document.getElementById("transposeInfo");
@@ -6210,11 +6346,18 @@
       return token;
     }
 
+    function normalizeDiminishedChordToken(token) {
+      return String(token || "")
+        .replace(/^([A-G](?:#|b)?)[oO](?=$|\/)/, "$1º")
+        .replace(/\/([a-g])(#|b)?/g, (_, note, accidental = "") => "/" + note.toUpperCase() + accidental)
+        .replace(/([0-9])[,\.](?=[0-9])/g, "$1/");
+    }
+
     function isChordToken(rawToken) {
-      const token = cleanChordToken(rawToken);
+      const token = normalizeDiminishedChordToken(cleanChordToken(rawToken));
       if (!token) return false;
 
-      const chordPattern = /^[A-G](?:#|b)?(?:(?:maj|min|dim|aug|sus|add|alt|m|M)|[0-9]+|[#b+\-º°()]|\/(?:[A-G](?:#|b)?|[0-9]+)?)*$/;
+      const chordPattern = /^[A-G](?:#|b)?(?:(?:maj|min|dim|aug|sus|add|alt|m|M)|[0-9]+|[#b+\-º°().,]|\/(?:[A-G](?:#|b)?|[0-9]+)?)*$/;
       return chordPattern.test(token) && /^(?![A-G](?:#|b)?\/$)/.test(token);
     }
 
@@ -6268,14 +6411,48 @@
         .join("\n");
     }
 
+    function normalizeChordLabelForDictionary(label) {
+      return normalizeDiminishedChordToken(cleanChordToken(label)) || "";
+    }
+
+    function hasChordSpacingSignal(parts, index) {
+      const prev = index > 0 ? parts[index - 1] : "";
+      const next = index < parts.length - 1 ? parts[index + 1] : "";
+      return /^\s{2,}$/.test(prev) || /^\s{2,}$/.test(next);
+    }
+
+    function hasExplicitChordSyntax(rawToken, normalizedToken) {
+      const raw = cleanChordToken(rawToken);
+      if (/^(?:A|E|Em|Ao|Do|do|ao|em|Com|com)$/.test(raw)) return false;
+      return /(?:#|b|[0-9]|maj|min|dim|aug|sus|add|alt|m|M|º|°|\+|-|\/|\(|\)|[,\.])/.test(normalizedToken);
+    }
+
     function createChordTokenButton(label, className = "", displayText = label) {
-      const chordLabel = String(label || "").trim();
+      const displayLabel = String(displayText || label || "").trim();
+      const chordLabel = normalizeChordLabelForDictionary(label);
       const button = document.createElement("button");
       button.type = "button";
       button.className = ("chord-token " + className).trim();
-      button.dataset.chordLabel = chordLabel;
-      button.textContent = String(displayText || chordLabel);
+      button.dataset.chordLabel = chordLabel || displayLabel;
+      button.textContent = displayLabel;
       return button;
+    }
+
+    function appendLooseChordMarkup(container, line) {
+      const parts = String(line || "").split(/(\s+)/);
+      parts.forEach((part, index) => {
+        if (!part) return;
+        if (/^\s+$/.test(part)) {
+          container.append(document.createTextNode(part));
+          return;
+        }
+        const label = normalizeChordLabelForDictionary(part);
+        if (label && isChordToken(label) && hasChordSpacingSignal(parts, index) && hasExplicitChordSyntax(part, label)) {
+          container.append(createChordTokenButton(label, "inline-chord loose-chord", part));
+          return;
+        }
+        container.append(document.createTextNode(part));
+      });
     }
 
     function formatSemitones(semitones) {
@@ -6331,8 +6508,8 @@
             return;
           }
 
-          const token = cleanChordToken(part);
-          if (isChordToken(token)) {
+          const token = normalizeChordLabelForDictionary(part);
+          if (token && isChordToken(token)) {
             lineElement.append(createChordTokenButton(token, "sheet-chord", part));
             return;
           }
@@ -6343,7 +6520,7 @@
         return fragment;
       }
 
-      lineElement.textContent = line;
+      appendLooseChordMarkup(lineElement, line);
       fragment.append(lineElement);
       return fragment;
     }
@@ -7127,13 +7304,6 @@
       item.addEventListener("click", event => {
         event.preventDefault();
         showView(item.dataset.nav);
-      });
-    });
-
-    document.querySelectorAll("[data-open-external-dictionary]").forEach(item => {
-      item.addEventListener("click", event => {
-        event.preventDefault();
-        openCifraClubDictionary();
       });
     });
 
